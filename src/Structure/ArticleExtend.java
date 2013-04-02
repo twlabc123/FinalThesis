@@ -34,7 +34,7 @@ public class ArticleExtend extends Article {
 	{
 		ArticleExtend ret = new ArticleExtend();
 		String line = reader.readLine();
-		if (line == null) return null;
+		if (line == null || line.startsWith("</event>")) return null;
 		line = reader.readLine();
 		ret.title = line.substring(7, line.length()-8);
 		line = reader.readLine();

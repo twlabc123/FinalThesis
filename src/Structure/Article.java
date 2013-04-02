@@ -53,9 +53,9 @@ public class Article  implements Comparable{
 	
 	public static Article readArticle(BufferedReader reader) throws Exception
 	{
-		Article ret = new Article();
 		String line = reader.readLine();
-		if (line == null) return null;
+		if (line == null || line.startsWith("</event>")) return null;
+		Article ret = new Article();
 		line = reader.readLine();
 		ret.title = line.substring(7, line.length()-8);
 		line = reader.readLine();
@@ -79,6 +79,19 @@ public class Article  implements Comparable{
 		writer.println("<time>"+time+"</time>");
 		writer.println("<source>"+source+"</source>");
 		writer.println("</doc>");
+	}
+	
+	public static Date getDate(String input) throws ParseException
+	{
+		String s = input;
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+		if (input.length() > 10) s = input.substring(0,10);
+		return format.parse(s);
+	}
+	
+	public static int getDay(Date d1, Date d2)
+	{
+		return ((int) ((d1.getTime() - d2.getTime()) / (24 * 60 * 60 * 1000)));
 	}
 	
 	public static void main(String[] args) {

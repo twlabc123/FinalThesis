@@ -25,6 +25,11 @@ public class EventClusterTFIDF extends EventCluster {
 	HashMap<String, Integer> bgtf;// background tf
 	int docTotalNum;
 	StopWordFilter swf;
+	Vector<ArticleExtend> leaders = new Vector<ArticleExtend>();
+	Vector<Vector<Article>> outputData = new Vector<Vector<Article>>();
+	double Threshold = 0.20;
+	//double Same = 0.90;
+	int Delta = 3;//span of the time window
 	
 	/**
 	 * @param args
@@ -77,9 +82,6 @@ public class EventClusterTFIDF extends EventCluster {
 	public void load(String input)
 	{
 		try {
-//			FileOutputStream stream = new FileOutputStream(output);
-//			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
-//			PrintWriter writer = new PrintWriter(sw);
 			FileInputStream istream = new FileInputStream(input);
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			BufferedReader reader = new BufferedReader(sr);
@@ -126,7 +128,6 @@ public class EventClusterTFIDF extends EventCluster {
 			}
 			reader.close();
 			System.out.println("Load Finish.");
-//			writer.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -154,9 +155,7 @@ public class EventClusterTFIDF extends EventCluster {
 				String[] term = a.content.split(" ");
 				for (int i = 0; i<term.length; i++)
 				{
-					//if (term[i].endsWith("/w") || term[i].length() == 0) continue;
 					if (swf.isStopWord(term[i])) continue;
-					//if (term[i].endsWith("/m") && term[i].length() == 3) continue;
 					if (a.tf.containsKey(term[i]))
 					{
 						Integer temp = a.tf.get(term[i]);
@@ -194,13 +193,10 @@ public class EventClusterTFIDF extends EventCluster {
 	
 	public void leaderCluster(String input, String output)
 	{
-		double Threshold = 0.20;
-		double Same = 0.90;
-		int Delta = 7;//span of the time window
 		try
 		{
-			Vector<ArticleExtend> leaders = new Vector<ArticleExtend>();
-			Vector<Vector<Article>> outputData = new Vector<Vector<Article>>();
+			leaders = new Vector<ArticleExtend>();
+			outputData = new Vector<Vector<Article>>();
 			//this.load(input);
 			FileOutputStream stream = new FileOutputStream(output);
 			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
@@ -209,9 +205,8 @@ public class EventClusterTFIDF extends EventCluster {
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			BufferedReader reader = new BufferedReader(sr);
 			ArticleExtend a;
-			ArticleExtend last = null;//For removing neighboring duplicated content
 			int count = 0;
-			while ((a = (ArticleExtend)ArticleExtend.readArticle(reader)) != null)
+			while ((a = ArticleExtend.readArticle(reader)) != null)
 			{
 				docTotalNum++;
 				HashSet<String> termSet = new HashSet<String>();
@@ -255,35 +250,6 @@ public class EventClusterTFIDF extends EventCluster {
 					}
 				}
 				
-				//remove neighboring duplicated content
-//				if (last != null && similarity(a, last) > 0.9)
-//				{
-//					//remove it from global model
-//					termSet = new HashSet<String>();
-//					for (int i = 0; i<term.length; i++)
-//					{
-//						if (swf.isStopWord(term[i])) continue;
-//						if (bgtf.containsKey(term[i]))
-//						{
-//							Integer temp = bgtf.get(term[i]);
-//							bgtf.remove(term[i]);
-//							bgtf.put(term[i], temp-1);
-//						}
-//						if (!termSet.contains(term[i]))
-//						{
-//							termSet.add(term[i]);
-//							if (idf.containsKey(term[i]))
-//							{
-//								Integer temp = idf.get(term[i]);
-//								idf.remove(term[i]);
-//								idf.put(term[i], temp-1);
-//							}
-//						}
-//					}
-//					continue;
-//				}
-//				last = a;
-				
 				//just for counting
 				count++;
 				if (count % 10 == 0)
@@ -309,7 +275,7 @@ public class EventClusterTFIDF extends EventCluster {
 					{
 						Date d2 = format.parse(leaders.elementAt(i).time.substring(0,11));
 						int delta = (int) ((d1.getTime() - d2.getTime()) / (24 * 60 * 60 * 1000));
-						if (delta > Delta)
+						if (delta >= Delta)
 						{
 							for (int j = 0; j<=i; j++)
 							{
@@ -344,9 +310,6 @@ public class EventClusterTFIDF extends EventCluster {
 			}
 			for (int i = 0; i<outputData.size(); i++)
 			{
-//				writer.print("<"+leaders.elementAt(i).time+">");
-//				writer.println(leaders.elementAt(i).content);
-//				writer.println("============");
 				writer.println("<event>");
 				for (int j = 0; j<outputData.elementAt(i).size(); j++)
 				{
