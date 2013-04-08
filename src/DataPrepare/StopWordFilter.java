@@ -21,6 +21,7 @@ public class StopWordFilter {
 		StopWordFilter s = new StopWordFilter();
 		s.load("data/sogou/tf.csv");
 		s.run("data/news_split_sort_cut.txt", "data/tf.csv");
+		s.stopWord.add("钓鱼岛/ns");
 		//s.runSogou("data/sogou/news_bg.txt", "data/sogou/tf.csv");
 	}
 	

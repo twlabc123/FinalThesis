@@ -8,6 +8,8 @@ public class Subtopic {
 	public HashMap<String, Integer> df;
 	public String start;
 	public String end;
+	public int docNum;
+	public String summary;
 	
 	public Subtopic()
 	{
@@ -15,6 +17,8 @@ public class Subtopic {
 		df = new HashMap<String, Integer>();
 		start = "";
 		end = "";
+		summary = "";
+		docNum = 0;
 	}
 
 }
