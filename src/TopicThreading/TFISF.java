@@ -25,7 +25,7 @@ public class TFISF {
 	public double InitClusterThreshold = 0.1;
 	public double ThreadingThreshold = InitClusterThreshold;
 	public int TestSample = 7000; // just for test
-	public int SummaryTermNum = 10;
+	public int SummaryTermNum = 20;
 	public int BigSubtopicArticleNum = 5;// only subtopic with more than this number of article was called BigSubtopic
 	
 	
@@ -35,7 +35,7 @@ public class TFISF {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		TFISF t = new TFISF();
-		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tdisf.txt");
+		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf.txt");
 	}
 	
 	TFISF()
@@ -75,12 +75,13 @@ public class TFISF {
 			//System.out.println(sf.get("游行/v")+"/"+subtopic.size());
 			for (int j = 0; j<subtopic.size(); j++)
 			{
+				Subtopic st = subtopic.elementAt(j);
 				writer.println("<subtopic>");
-				writer.println(extractSubtopicSummary(subtopic.elementAt(j)));
-				writer.println(subtopic.elementAt(j).docNum);
-				writer.println(subtopic.elementAt(j).summary);
+				writer.println(extractSubtopicSummary(st));
+				writer.println(st.docNum + " " + st.start + " " + st.end);
+				writer.println(st.summary);
 				writer.println("</subtopic>");
-				System.out.println(subtopic.elementAt(j).docNum);
+				System.out.println(st.docNum);
 			}
 			System.out.println("finished");
 			reader.close();
@@ -92,7 +93,7 @@ public class TFISF {
 		}
 	}
 	
-	public void init(Vector<Event> event, PrintWriter writer) throws IOException
+	public void init(Vector<Event> event, PrintWriter writer) throws Exception
 	{
 		for (int i = 0; i<event.size(); i++)
 		{
@@ -162,7 +163,7 @@ public class TFISF {
 		initCluster(writer);
 	}
 	
-	public void initCluster(PrintWriter writer) throws IOException
+	public void initCluster(PrintWriter writer) throws Exception
 	{
 		int i = 1;
 		while (i < subtopic.size())
@@ -171,7 +172,7 @@ public class TFISF {
 			int mergeTo = -1;
 			for (int j = 0; j<i; j++)
 			{
-				double tempsim = similarity(subtopic.elementAt(i), subtopic.elementAt(j));
+				double tempsim = similarity(subtopic.elementAt(j), subtopic.elementAt(i));
 				if (tempsim > InitClusterThreshold && tempsim > sim)
 				{
 					mergeTo = j;
@@ -336,7 +337,7 @@ public class TFISF {
 		if (a.end.compareTo(b.end) < 0) a.end = b.end;
 	}
 	
-	public double similarity(Subtopic a, Subtopic b) throws IOException {
+	public double similarity(Subtopic a, Subtopic b) throws Exception {// a should be the former subtopic and b should be the newer one.
 		// TODO Auto-generated method stub
 		double ret = 0;
 		double da = 0.0;
@@ -356,12 +357,6 @@ public class TFISF {
 			{
 				ret += temp.get(term).doubleValue() * tempb;
 			}
-//			System.out.println(Math.log((double)subtopic.size()/((double)sf.get(term))+1));
-//			if (sf.get(term) == 0)
-//			{
-//				System.out.println(term);
-//				System.in.read();
-//			}
 		}
 		
 		ret /= Math.sqrt(da*db);
@@ -376,7 +371,10 @@ public class TFISF {
 		Vector<Double> tfisf = new Vector<Double>();
 		for (String term : st.tf.keySet())
 		{
-			double temp = st.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));
+			int bigSTNum = countBigSubtopic();
+			int termsf = (bigSTNum >= sf.get(term)) ? sf.get(term) : bigSTNum;
+			double temp = st.tf.get(term) * Math.log((double)bigSTNum/((double)termsf));
+			if (term.endsWith("/nr")) temp *= 0.5;//just too much persons' name
 			if (summaryTerm.size() == 0)
 			{
 				summaryTerm.add(term);
