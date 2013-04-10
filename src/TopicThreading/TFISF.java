@@ -21,11 +21,12 @@ public class TFISF {
 
 	public Vector<Subtopic> subtopic;
 	public HashMap<String, Integer> sf;
-	//public int stTotalNum;
+	public StopWordFilter swf;
 	public double InitClusterThreshold = 0.1;
 	public double ThreadingThreshold = InitClusterThreshold;
-	public StopWordFilter swf;
 	public int TestSample = 7000; // just for test
+	public int SummaryTermNum = 10;
+	public int BigSubtopicArticleNum = 5;// only subtopic with more than this number of article was called BigSubtopic
 	
 	
 	/**
@@ -74,7 +75,11 @@ public class TFISF {
 			//System.out.println(sf.get("游行/v")+"/"+subtopic.size());
 			for (int j = 0; j<subtopic.size(); j++)
 			{
-				writer.println(subtopic.elementAt(j).summary+"\n<subtopic>");
+				writer.println("<subtopic>");
+				writer.println(extractSubtopicSummary(subtopic.elementAt(j)));
+				writer.println(subtopic.elementAt(j).docNum);
+				writer.println(subtopic.elementAt(j).summary);
+				writer.println("</subtopic>");
 				System.out.println(subtopic.elementAt(j).docNum);
 			}
 			System.out.println("finished");
@@ -167,7 +172,6 @@ public class TFISF {
 			for (int j = 0; j<i; j++)
 			{
 				double tempsim = similarity(subtopic.elementAt(i), subtopic.elementAt(j));
-				writer.println(subtopic.elementAt(i).summary + " " + subtopic.elementAt(j).summary + " " +tempsim);
 				if (tempsim > InitClusterThreshold && tempsim > sim)
 				{
 					mergeTo = j;
@@ -364,6 +368,72 @@ public class TFISF {
 		return ret;
 	}
 	
+	
+	public String extractSubtopicSummary(Subtopic st)
+	{
+		String ret = "";
+		Vector<String> summaryTerm = new Vector<String>();
+		Vector<Double> tfisf = new Vector<Double>();
+		for (String term : st.tf.keySet())
+		{
+			double temp = st.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));
+			if (summaryTerm.size() == 0)
+			{
+				summaryTerm.add(term);
+				tfisf.add(temp);
+			}
+			else
+			{
+				int j = -1;
+				for (int i = summaryTerm.size()-1; i>=0; i--)
+				{
+					if (temp > tfisf.elementAt(i))
+					{
+						j = i;
+					}
+					else
+					{
+						break;
+					}
+				}
+				if (j != -1)
+				{
+					summaryTerm.insertElementAt(term, j);
+					tfisf.insertElementAt(temp, j);
+					if (summaryTerm.size() > SummaryTermNum)
+					{
+						summaryTerm.remove(summaryTerm.size()-1);
+						tfisf.remove(tfisf.size()-1);
+					}
+				}
+				else if (summaryTerm.size() < SummaryTermNum)
+				{
+					summaryTerm.add(term);
+					tfisf.add(temp);
+				}
+			}
+		}
+		
+		for (int i = 0; i<summaryTerm.size(); i++)
+		{
+			ret += summaryTerm.elementAt(i) + " ";
+		}
+			
+		return ret;
+	}
+	
+	public int countBigSubtopic()
+	{
+		int ret = 0;
+		for (int i = 0; i<subtopic.size(); i++)
+		{
+			if (subtopic.elementAt(i).docNum >= BigSubtopicArticleNum)
+			{
+				ret++;
+			}
+		}
+		return ret;
+	}
 	
 
 }
