@@ -10,6 +10,7 @@ public class Subtopic {
 	public String end;
 	public int docNum;
 	public String summary;
+	public double active;
 	
 	public Subtopic()
 	{
@@ -19,6 +20,7 @@ public class Subtopic {
 		end = "";
 		summary = "";
 		docNum = 0;
+		active = 1.0;
 	}
 
 }
