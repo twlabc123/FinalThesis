@@ -57,6 +57,12 @@ public class StopWordFilter {
 		}
 	}
 	
+	public boolean notWord(String term)
+	{
+		boolean ret = term.endsWith("/w") || term.length() <= 2;
+		return ret;
+	}
+	
 	public boolean isStopWord(String term)
 	{
 		boolean ret = stopWord.contains(term) || term.endsWith("/w") || term.length() == 0 || (term.endsWith("/m") && term.length() == 3);

@@ -18,7 +18,7 @@ public class TfisfTime extends TFISF {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		TfisfTime t = new TfisfTime();
-		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf_time.txt");
+		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf_time_big.txt");
 	}
 	
 	public double similarity(Subtopic a, Subtopic b) throws Exception {
@@ -45,6 +45,8 @@ public class TfisfTime extends TFISF {
 		
 		ret /= Math.sqrt(da*db);
 		
+		
+		// Different from TFISF
 		int interval = Article.getDay(Article.getDate(a.end), Article.getDate(b.start));
 		if (interval > 0)
 		{
