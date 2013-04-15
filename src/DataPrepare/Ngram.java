@@ -25,21 +25,23 @@ public class Ngram {
 	public HashMap<String, Integer> ntf;
 	public StopWordFilter swf;
 	double Threshold = 0.9;
-	double AnyThreshold = 0.9;
+	double AnyThreshold = 0.8;
 	double EachThreshold = 1.2;
 	int freThreshold = 0;
 	
+	
+	public HashMap<String, String> dic;
 	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		for (int i = 2; i<=2; i++)
-		{
-			Ngram b = new Ngram();
-			b.extract("data/final/news_lc.txt", "data/ngram/"+i+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt", i);
-		}
+		Ngram b = new Ngram();
+		int n = 2;
+		//b.extract("data/final/news_lc_merge.txt", "data/ngram/"+n+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt", n);
+		b.loadDic("data/ngram/2gramdic_0,9_0.8_1.2_2.txt");
+		b.merge("data/final/news_lc_merge.txt", "data/final/news_lc_merge_2.txt");
 		
 	}
 	
@@ -47,6 +49,7 @@ public class Ngram {
 	{
 		tf = new HashMap<String, Integer>();
 		ntf = new HashMap<String, Integer>();
+		dic = new HashMap<String, String>();
 		swf = new StopWordFilter();
 		swf.load("data/sogou/tf.csv");
 	}
@@ -180,5 +183,66 @@ public class Ngram {
 			e.printStackTrace();
 		}
 	}
+	
+	public void loadDic(String input)
+	{
+		try
+		{
+			FileInputStream istream = new FileInputStream(input);
+			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
+			BufferedReader reader = new BufferedReader(sr);
+			String line;
+			while ((line = reader.readLine()) != null)
+			{
+				String key = line.substring(0, line.indexOf("@$@"));
+				String value = key.split(" ")[0].substring(0, key.split(" ")[0].indexOf("/")) + key.split(" ")[1].substring(0, key.split(" ")[1].indexOf("/"))+"/me";
+				//System.out.println(key+" --> "+value);
+				dic.put(key, value);
+			}
+			reader.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void merge(String input, String output)
+	{
+		try
+		{
+			FileOutputStream stream = new FileOutputStream(output);
+			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
+			PrintWriter writer = new PrintWriter(sw);
+			FileInputStream istream = new FileInputStream(input);
+			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
+			BufferedReader reader = new BufferedReader(sr);
+			Event e;
+			int count = 0;
+			while ((e = Event.readEvent(reader)) != null)
+			{
+				ArticleExtend a = null;
+				for (int i = 0; i<e.article.size(); i++)
+				{
+					a = e.article.elementAt(i);
+					for (String term : dic.keySet())
+					{
+						a.title = a.title.replaceAll(term, dic.get(term));
+						a.content = a.content.replaceAll(term, dic.get(term));
+					}
+				}
+				e.printEvent(writer);
+				count++;
+				if (count % 100 == 0) System.out.println(count);
+			}
+			reader.close();
+			writer.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
 
 }

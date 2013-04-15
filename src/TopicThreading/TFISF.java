@@ -22,7 +22,7 @@ public class TFISF {
 	public Vector<Subtopic> subtopic;
 	public HashMap<String, Integer> sf;
 	public StopWordFilter swf;
-	public double InitClusterThreshold = 0.1;
+	public double InitClusterThreshold = 0.15;
 	public double ThreadingThreshold = InitClusterThreshold;
 	public int TestSample = 7000; // just for test
 	public int SummaryTermNum = 20;
@@ -76,9 +76,10 @@ public class TFISF {
 			for (int j = 0; j<subtopic.size(); j++)
 			{
 				Subtopic st = subtopic.elementAt(j);
+				if (st.docNum < 10) continue;
 				writer.println("<subtopic>");
 				writer.println(extractSubtopicSummary(st));
-				writer.println(st.docNum + " " + st.start + " " + st.end);
+				writer.println(st.docNum + " " + st.start.substring(0,10) + " " + st.end.substring(0,10));
 				writer.println(st.summary);
 				writer.println("</subtopic>");
 				System.out.println(st.docNum);

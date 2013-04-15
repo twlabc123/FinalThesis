@@ -1,6 +1,7 @@
 package Structure;
 
 import java.io.BufferedReader;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -34,6 +35,16 @@ public class Event {
 		ret.start = ret.article.firstElement().time;
 		ret.end = ret.article.lastElement().time;
 		return ret;
+	}
+	
+	public void printEvent(PrintWriter writer) throws Exception
+	{
+		writer.println("<event>");
+		for (int i = 0; i<article.size(); i++)
+		{
+			article.elementAt(i).printArticle(writer);
+		}
+		writer.println("</event>");
 	}
 
 }
