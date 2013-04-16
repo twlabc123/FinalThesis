@@ -23,7 +23,7 @@ public class TfisfTime extends TFISF {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		TfisfTime t = new TfisfTime();
-		t.test("data/final/news_lc_merge_2.txt", "data/final/news_lc_test_tfisf_time_merge_2.txt");
+		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf_time_merge_2.txt");
 	}
 	
 	public void Threading(BufferedReader reader, PrintWriter writer)

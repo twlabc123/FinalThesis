@@ -94,6 +94,14 @@ public class Article  implements Comparable{
 		return ((int) ((d1.getTime() - d2.getTime()) / (24 * 60 * 60 * 1000)));
 	}
 	
+	public static int getDay(String input1, String input2) throws ParseException
+	{
+		Date d1 = getDate(input1);
+		Date d2 = getDate(input2);
+		return ((int) ((d1.getTime() - d2.getTime()) / (24 * 60 * 60 * 1000)));
+		
+	}
+	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 

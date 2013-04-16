@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,9 +20,13 @@ public class BurstExtraction {
 	
 	Vector<Event> event;
 	Vector<Burst> burst;
+	HashMap<String, Integer> df;
+	int docNum;
 	HashMap<String, String> active;
 	StopWordFilter swf;
 	int WinSize = 7;
+	double Threshold = 3;
+	int BdfThreshold = 50;
 
 	/**
 	 * @param args
@@ -29,6 +34,7 @@ public class BurstExtraction {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		BurstExtraction be = new BurstExtraction();
+		be.avgDf("data/final/news.txt");
 		be.test("data/final/news.txt", "data/final/news_burst_test.txt");
 	}
 	
@@ -39,6 +45,7 @@ public class BurstExtraction {
 		event = new Vector<Event>();
 		swf = new StopWordFilter();
 		swf.load("data/sogou/tf.csv");
+		df = new HashMap<String, Integer>();
 	}
 	
 	public void test(String input, String output)
@@ -95,9 +102,26 @@ public class BurstExtraction {
 			
 			
 			complete(END);
+			merge();
+			
 			for (int i = 0; i<burst.size(); i++)
 			{
-				burst.elementAt(i).printBurst(writer);
+				for (int j = i+1; j<burst.size(); j++)
+				{
+					Burst b1 = burst.elementAt(i);
+					Burst b2 = burst.elementAt(j);
+					if ((b1.start+b1.end).compareTo(b2.start+b2.end) > 0)
+					{
+						burst.set(i, b2);
+						burst.set(j, b1);
+					}
+				}
+			}
+			
+			
+			for (int i = 0; i<burst.size(); i++)
+			{
+				if (df.get(burst.elementAt(i).term) > 50) burst.elementAt(i).printBurst(writer);
 			}
 			reader.close();
 			writer.close();
@@ -110,7 +134,7 @@ public class BurstExtraction {
 	
 	
 	
-	public void batch(Vector<ArticleExtend> article)
+	public void batch(Vector<ArticleExtend> article) throws Exception
 	{
 		HashMap<String, Integer> batchdf = new HashMap<String, Integer>();
 		for (int i = 0; i<article.size(); i++)
@@ -137,16 +161,18 @@ public class BurstExtraction {
 				}
 			}
 		}
-		double Threshold = 0.95;
 		HashSet<String> temp = new HashSet<String>();
 		for (String term : active.keySet())
 		{
-			if (!batchdf.keySet().contains(term) || (double)batchdf.get(term)/(double)article.size() < Threshold)
+			if (!batchdf.keySet().contains(term) || !isBurst(batchdf.get(term), article.size(), term))
 			{
 				Burst b = new Burst();
 				b.term = term;
 				b.start = active.get(term);
-				b.end = article.lastElement().time;
+				Date d = Article.getDate(article.firstElement().time);
+				d.setTime(d.getTime()+0*3600*24);
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+				b.end = format.format(d);
 				burst.add(b);
 				temp.add(term);
 				if (batchdf.keySet().contains(term)) batchdf.remove(term);// just for speeding
@@ -162,11 +188,22 @@ public class BurstExtraction {
 		}
 		for (String term : batchdf.keySet())
 		{
-			if ((double)batchdf.get(term)/(double)article.size() >= Threshold)
+			if (isBurst(batchdf.get(term), article.size(), term))
 			{
-				active.put(term, article.firstElement().time);
+				Date d = Article.getDate(article.firstElement().time);
+				d.setTime(d.getTime()+0*3600*24);
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+				active.put(term, format.format(d));
 			}
 		}
+	}
+	
+	boolean isBurst(int bdf, int articleSize, String term)
+	{
+		double local = (double)bdf/(double)articleSize;
+		double global = (double)df.get(term)/(double)docNum;
+		int DynamicThreshold = (BdfThreshold < articleSize) ? BdfThreshold : articleSize;
+		return (local/global >= Threshold && bdf >= DynamicThreshold);
 	}
 	
 	public void complete(String end)
@@ -181,10 +218,78 @@ public class BurstExtraction {
 		}
 	}
 	
-	
-	public void extractBurst()
+	public void merge() throws Exception // merge very close burst
 	{
-		
+		HashMap<String, Integer> lastIndex = new HashMap<String, Integer>();
+		int i = 0;
+		while (i < burst.size())
+		{
+			Burst b = burst.elementAt(i);
+			String term = b.term;
+			if (lastIndex.containsKey(term))
+			{
+				Burst last = burst.elementAt(lastIndex.get(term));
+				int interval = Article.getDay(b.start, last.end);
+				if (interval <= 2)
+				{
+					last.end = b.end;
+					burst.set(lastIndex.get(term), last);
+					burst.remove(i);
+					i--;
+				}
+				else
+				{
+					lastIndex.remove(term);
+					lastIndex.put(term, i);
+				}
+			}
+			else
+			{
+				lastIndex.put(term, i);
+			}
+			i++;
+		}
+	}
+	
+	public void avgDf(String input)
+	{
+		try
+		{
+			FileInputStream istream = new FileInputStream(input);
+			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
+			BufferedReader reader = new BufferedReader(sr);
+			ArticleExtend a;
+			while ((a = ArticleExtend.readArticle(reader)) != null)
+			{
+				HashSet<String> tempSet = new HashSet<String>();
+				String[] ss = a.content.split(" ");
+				for (int i = 0; i<ss.length; i++)
+				{
+					String term = ss[i];
+					if (swf.isStopWord(term)) continue;
+					if (!tempSet.contains(term))
+					{
+						if (df.containsKey(term))
+						{
+							Integer temp = df.get(term);
+							df.remove(term);
+							df.put(term, temp+1);
+						}
+						else
+						{
+							df.put(term, 1);
+						}
+					}
+				}
+				docNum++;
+				if (docNum % 100 == 0) System.out.println(docNum);
+			}
+			reader.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 }

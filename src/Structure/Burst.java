@@ -16,8 +16,10 @@ public class Burst {
 	
 	public void printBurst(PrintWriter writer) throws Exception
 	{
-		writer.println(term+": "+start.substring(0,10)+"-----"+end.substring(0,10));
+		writer.println(term+" "+start.substring(0,10)+" "+end.substring(0,10));
 	}
+	
+	
 	
 
 }

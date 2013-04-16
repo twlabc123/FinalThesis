@@ -40,8 +40,9 @@ public class Ngram {
 		Ngram b = new Ngram();
 		int n = 2;
 		//b.extract("data/final/news_lc_merge.txt", "data/ngram/"+n+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt", n);
-		b.loadDic("data/ngram/2gramdic_0,9_0.8_1.2_2.txt");
-		b.merge("data/final/news_lc_merge.txt", "data/final/news_lc_merge_2.txt");
+		b.loadDic("data/ngram/2gramdic_0.9_0.8_1.2_2.txt");
+		//b.merge("data/final/news_lc_merge.txt", "data/final/news_lc_merge_2.txt");
+		b.mergeArticle("data/final/news_merge.txt", "data/final/news_merge_2.txt");
 		
 	}
 	
@@ -232,6 +233,38 @@ public class Ngram {
 					}
 				}
 				e.printEvent(writer);
+				count++;
+				if (count % 100 == 0) System.out.println(count);
+			}
+			reader.close();
+			writer.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void mergeArticle(String input, String output)
+	{
+		try
+		{
+			FileOutputStream stream = new FileOutputStream(output);
+			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
+			PrintWriter writer = new PrintWriter(sw);
+			FileInputStream istream = new FileInputStream(input);
+			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
+			BufferedReader reader = new BufferedReader(sr);
+			ArticleExtend a;
+			int count = 0;
+			while ((a = ArticleExtend.readArticle(reader)) != null)
+			{
+				for (String term : dic.keySet())
+				{
+					a.title = a.title.replaceAll(term, dic.get(term));
+					a.content = a.content.replaceAll(term, dic.get(term));
+				}
+				a.printArticle(writer);
 				count++;
 				if (count % 100 == 0) System.out.println(count);
 			}

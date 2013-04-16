@@ -22,7 +22,7 @@ public class TFISF {
 	public Vector<Subtopic> subtopic;
 	public HashMap<String, Integer> sf;
 	public StopWordFilter swf;
-	public double InitClusterThreshold = 0.15;
+	public double InitClusterThreshold = 0.1;
 	public double ThreadingThreshold = InitClusterThreshold;
 	public int TestSample = 7000; // just for test
 	public int SummaryTermNum = 20;
@@ -42,7 +42,6 @@ public class TFISF {
 	{
 		subtopic = new Vector<Subtopic>();
 		sf = new HashMap<String, Integer>();
-		//stTotalNum = 0;
 		swf = new StopWordFilter();
 		swf.load("data/sogou/tf.csv");
 	}
