@@ -44,7 +44,8 @@ public class TfisfTime extends TFISF {
 					
 					ArticleExtend a = e.article.elementAt(j);
 					st.docNum++;
-					if (st.summary.length() != 0) st.summary += "\n"+a.title; else st.summary += a.title;
+					if (st.summary.length() != 0) st.summary += "\n";
+					st.summary += e.start.substring(0,10) + " " + e.end.substring(0,10) + " " + a.title;
 					String[] ss = a.content.split(" ");
 					HashSet<String> temp2 = new HashSet<String>();
 					for (int k = 0; k<ss.length; k++)

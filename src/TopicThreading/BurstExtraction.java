@@ -27,6 +27,7 @@ public class BurstExtraction {
 	int WinSize = 7;
 	double Threshold = 3;
 	int BdfThreshold = 50;
+	int MergeInterval = 7;
 
 	/**
 	 * @param args
@@ -230,7 +231,7 @@ public class BurstExtraction {
 			{
 				Burst last = burst.elementAt(lastIndex.get(term));
 				int interval = Article.getDay(b.start, last.end);
-				if (interval <= 2)
+				if (interval <= MergeInterval)
 				{
 					last.end = b.end;
 					burst.set(lastIndex.get(term), last);

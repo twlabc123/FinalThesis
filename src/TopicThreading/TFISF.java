@@ -69,13 +69,12 @@ public class TFISF {
 			System.out.println("Threading");
 			Threading(reader, writer);
 			System.out.println("Threading finished");
-			System.out.println(sf.get("钓鱼岛/ns")+"/"+subtopic.size());
-			//System.out.println(sf.get("游行/n")+"/"+subtopic.size());
-			//System.out.println(sf.get("游行/v")+"/"+subtopic.size());
+			int sum = 0;
 			for (int j = 0; j<subtopic.size(); j++)
 			{
 				Subtopic st = subtopic.elementAt(j);
-				if (st.docNum < 10) continue;
+				if (st.docNum < 50) continue;
+				sum++;
 				writer.println("<subtopic>");
 				writer.println(extractSubtopicSummary(st));
 				writer.println(st.docNum + " " + st.start.substring(0,10) + " " + st.end.substring(0,10));
@@ -83,6 +82,8 @@ public class TFISF {
 				writer.println("</subtopic>");
 				System.out.println(st.docNum);
 			}
+			System.out.println("Total subtopics : "+subtopic.size());
+			System.out.println("Big subtopics : "+sum);
 			System.out.println("finished");
 			reader.close();
 			writer.close();
@@ -101,13 +102,13 @@ public class TFISF {
 			Event e = event.elementAt(i);
 			st.start = e.start;
 			st.end = e.end;
-			//stTotalNum++;
 			HashSet<String> temp = new HashSet<String>();
 			for (int j = 0; j<e.article.size(); j++)
 			{
 				ArticleExtend a = e.article.elementAt(j);
 				st.docNum++;
-				if (st.summary.length() != 0) st.summary += "\n"+a.title; else st.summary += a.title;
+				if (st.summary.length() != 0) st.summary += "\n";
+				st.summary += e.start.substring(0,10) + " " + e.end.substring(0,10) + " " + a.title;
 				String[] ss = a.content.split(" ");
 				HashSet<String> temp2 = new HashSet<String>();
 				for (int k = 0; k<ss.length; k++)
@@ -208,7 +209,8 @@ public class TFISF {
 					
 					ArticleExtend a = e.article.elementAt(j);
 					st.docNum++;
-					if (st.summary.length() != 0) st.summary += "\n"+a.title; else st.summary += a.title;
+					if (st.summary.length() != 0) st.summary += "\n";
+					st.summary += e.start.substring(0,10) + " " + e.end.substring(0,10) + " " + a.title;
 					String[] ss = a.content.split(" ");
 					HashSet<String> temp2 = new HashSet<String>();
 					for (int k = 0; k<ss.length; k++)
