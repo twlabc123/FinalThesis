@@ -15,7 +15,7 @@ import Structure.Subtopic;
 public class TfisfTime extends TFISF {
 	
 	
-	double alpha = -0.5; // time fix with e^(-alpha*interval)
+	double alpha = -0.02; // time fix with e^(-alpha*interval)
 
 	/**
 	 * @param args
@@ -23,119 +23,8 @@ public class TfisfTime extends TFISF {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		TfisfTime t = new TfisfTime();
+		t.ThreadingThreshold *= Math.exp(t.alpha);
 		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf_time_merge_2.txt");
-	}
-	
-	public void Threading(BufferedReader reader, PrintWriter writer)
-	{
-		try
-		{
-			int count = 0;
-			Event e;
-			while ((e = Event.readEvent(reader)) != null )
-			{
-				Subtopic st = new Subtopic();
-				st.start = e.start;
-				st.end = e.end;
-				//stTotalNum++;
-				HashSet<String> temp = new HashSet<String>();
-				for (int j = 0; j<e.article.size(); j++)
-				{
-					
-					ArticleExtend a = e.article.elementAt(j);
-					st.docNum++;
-					if (st.summary.length() != 0) st.summary += "\n";
-					st.summary += e.start.substring(0,10) + " " + e.end.substring(0,10) + " " + a.title;
-					String[] ss = a.content.split(" ");
-					HashSet<String> temp2 = new HashSet<String>();
-					for (int k = 0; k<ss.length; k++)
-					{
-						String term = ss[k];
-						if (swf.isStopWord(term)) continue;
-						
-						if (st.tf.containsKey(term))
-						{
-							Integer tempI = st.tf.get(term);
-							st.tf.remove(term);
-							st.tf.put(term, tempI+1);
-						}
-						else
-						{
-							st.tf.put(term, 1);
-						}
-						
-						if (!temp.contains(term))
-						{						
-							if (sf.containsKey(term))
-							{
-								Integer tempI = sf.get(term);
-								sf.remove(term);
-								sf.put(term, tempI+1);
-							}
-							else
-							{
-								sf.put(term, 1);
-							}
-							temp.add(term);
-						}
-						
-						if (!temp2.contains(term))
-						{
-							if (st.df.containsKey(term))
-							{
-								Integer tempI = st.df.get(term);
-								st.df.remove(term);
-								st.df.put(term, tempI+1);
-							}
-							else
-							{
-								st.df.put(term, 1);
-							}
-							temp2.add(term);
-						}
-						
-					}
-				}
-				
-				double sim = 0;
-				int mergeTo = -1;
-				int index = 0;
-				while (index < subtopic.size())
-				{
-					int interval = Article.getDay(Article.getDate(subtopic.elementAt(index).end), Article.getDate(st.start));
-					if (interval > 7 && subtopic.elementAt(index).docNum < 50)
-					{
-						subtopic.remove(index);
-					}
-					else
-					{
-						double tempsim = similarity(subtopic.elementAt(index), st);
-						if (tempsim > ThreadingThreshold && tempsim > sim)
-						{
-							mergeTo = index;
-							sim = tempsim;
-						}
-						index++;
-					}
-				}
-				
-				if (mergeTo != -1)
-				{
-					merge(subtopic.elementAt(mergeTo), st);
-				}
-				else
-				{
-					subtopic.add(st);
-				}
-				count++;
-				if (count % 100 == 0) System.out.println(count);
-				if (count > TestSample) break;
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
 	}
 	
 	public double similarity(Subtopic a, Subtopic b) throws Exception {
@@ -145,21 +34,26 @@ public class TfisfTime extends TFISF {
 		double db = 0.0;
 		
 		// Different from TFISF
-		int interval = Article.getDay(Article.getDate(a.end), Article.getDate(b.start));
+		long interval = b.center - a.center;
+		if (interval < 0) interval = 0;
+		//if (interval > 5) interval -= 5;
 		double fix = Math.exp(interval*alpha);
+		if (fix < ThreadingThreshold*ThreadingThreshold) a.active = false;
 		if (fix <= ThreadingThreshold) return 0;
 		
 		
 		HashMap<String, Double> temp = new HashMap<String, Double>();
 		for (String term : a.tf.keySet())
 		{
-			double tempa = a.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));
+			double tempa = a.tf.get(term) * Math.log((double)stNum/((double)sf.get(term)));
+			//double tempa = 1.0;
 			da += tempa*tempa;
 			temp.put(term, tempa);
 		}
 		for (String term : b.tf.keySet())
 		{
-			double tempb = b.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));
+			double tempb = b.tf.get(term) * Math.log((double)stNum/((double)sf.get(term)));
+			//double tempb = 1.0;
 			db += tempb*tempb;
 			if (temp.containsKey(term))
 			{

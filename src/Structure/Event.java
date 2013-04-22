@@ -2,6 +2,7 @@ package Structure;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -10,6 +11,7 @@ public class Event {
 	public Vector<ArticleExtend> article;
 	public String start;
 	public String end;
+	public long center;
 	public HashMap<String, Integer> tf;
 	public HashMap<String, Integer> df;
 	
@@ -18,6 +20,7 @@ public class Event {
 		article = new Vector<ArticleExtend>();
 		start = "";
 		end = "";
+		center = 0;
 		tf = new HashMap<String, Integer>();
 		df = new HashMap<String, Integer>();
 	}
@@ -34,6 +37,13 @@ public class Event {
 		}
 		ret.start = ret.article.firstElement().time;
 		ret.end = ret.article.lastElement().time;
+		long temp = 0;
+		for (int i = 0; i<ret.article.size(); i++)
+		{
+			temp += Article.getDate(ret.article.elementAt(i).time).getTime()/3600/1000;
+		}
+		ret.center = temp/ret.article.size();
+		
 		return ret;
 	}
 	

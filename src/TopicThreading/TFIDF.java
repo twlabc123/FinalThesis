@@ -16,13 +16,15 @@ import Structure.ArticleExtend;
 import Structure.Event;
 import Structure.Subtopic;
 
-public class TFIDF {
+public class TFIDF extends TFISF {
+	//这段应该重用TFISF部分或者反之，但一开始写的时候写挫了……
 
 	public Vector<Subtopic> subtopic;
 	public HashMap<String, Integer> df;
 	public int docTotalNum;
 	public double InitClusterThreshold = 0.1;
 	public StopWordFilter swf;
+	public int SummaryTitleNum = 3;
 	
 	
 	/**
@@ -40,7 +42,8 @@ public class TFIDF {
 		df = new HashMap<String, Integer>();
 		docTotalNum = 0;
 		swf = new StopWordFilter();
-		swf.load("data/sogou/tf.csv");
+		//swf.load("data/sogou/tf.csv");
+		swf.load("data/stopwords.txt");
 	}
 	
 	public void test(String input, String output)
@@ -50,7 +53,7 @@ public class TFIDF {
 			int count = 0;
 			FileOutputStream stream = new FileOutputStream(output);
 			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
-			PrintWriter writer = new PrintWriter(sw);
+			writer = new PrintWriter(sw);
 			FileInputStream istream = new FileInputStream(input);
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			BufferedReader reader = new BufferedReader(sr);
@@ -62,14 +65,24 @@ public class TFIDF {
 				count++;
 				if (count >= 100) break;
 			}
-			init(initData, writer);
+			init(initData);
 			System.out.println("Threading");
-			Threading(reader, writer);
+			Threading(reader);
 			System.out.println("Threading finished");
 			for (int j = 0; j<subtopic.size(); j++)
 			{
-				writer.println(subtopic.elementAt(j).summary+"\n<subtopic>");
-				System.out.println(subtopic.elementAt(j).docNum);
+				Subtopic st = subtopic.elementAt(j);
+				if (st.docNum >= 20) bigStNum++;
+				st.printSubtopic(writer, this);
+				System.out.println(st.docNum);
+			}
+			writer.println("Total subtopics : "+stNum);
+			writer.println("Big subtopics : "+bigStNum);
+			int biggest = -1;
+			for (int i = 0; i<docNums.size(); i++)
+			{
+				System.out.println(docNums.elementAt(i));
+				if (docNums.elementAt(i) > biggest) biggest = docNums.elementAt(i);
 			}
 			System.out.println("finished");
 			reader.close();
@@ -81,7 +94,7 @@ public class TFIDF {
 		}
 	}
 	
-	public void init(Vector<Event> event, PrintWriter writer)
+	public void init(Vector<Event> event)
 	{
 		for (int i = 0; i<event.size(); i++)
 		{
@@ -89,12 +102,14 @@ public class TFIDF {
 			Event e = event.elementAt(i);
 			st.start = e.start;
 			st.end = e.end;
+			st.center = e.center;
 			for (int j = 0; j<e.article.size(); j++)
 			{
 				docTotalNum++;
 				ArticleExtend a = e.article.elementAt(j);
 				st.docNum++;
-				if (st.summary.length() != 0) st.summary += "\n"+a.title; else st.summary += a.title;
+				if (st.summary.length() != 0) st.summary += "\n";
+				st.summary += a.time.substring(0,10) + " " + a.title;
 				String[] ss = a.content.split(" ");
 				HashSet<String> temp = new HashSet<String>();
 				for (int k = 0; k<ss.length; k++)
@@ -141,11 +156,11 @@ public class TFIDF {
 			}
 			subtopic.add(st);
 		}
-		System.out.println(docTotalNum);
-		initCluster(writer);
+		//System.out.println(docTotalNum);
+		initCluster();
 	}
 	
-	public void Threading(BufferedReader reader, PrintWriter writer)
+	public void Threading(BufferedReader reader)
 	{
 		try
 		{
@@ -156,12 +171,14 @@ public class TFIDF {
 				Subtopic st = new Subtopic();
 				st.start = e.start;
 				st.end = e.end;
+				st.center = e.center;
 				for (int j = 0; j<e.article.size(); j++)
 				{
 					docTotalNum++;
 					ArticleExtend a = e.article.elementAt(j);
 					st.docNum++;
-					if (st.summary.length() != 0) st.summary += "\n"+a.title; else st.summary += a.title;
+					if (st.summary.length() != 0) st.summary += "\n";
+					st.summary += a.time.substring(0,10) + " " + a.title;
 					String[] ss = a.content.split(" ");
 					HashSet<String> temp = new HashSet<String>();
 					for (int k = 0; k<ss.length; k++)
@@ -229,7 +246,6 @@ public class TFIDF {
 				}
 				count++;
 				if (count % 100 == 0) System.out.println(count);
-				//if (count > 1000) break;
 			}
 		}
 		catch (Exception e)
@@ -238,7 +254,7 @@ public class TFIDF {
 		}
 	}
 	
-	public void initCluster(PrintWriter writer)
+	public void initCluster()
 	{
 		int i = 1;
 		while (i < subtopic.size())
@@ -263,12 +279,6 @@ public class TFIDF {
 			}
 			i++;
 		}
-//		for (int j = 0; j<subtopic.size(); j++)
-//		{
-//			writer.println(subtopic.elementAt(j).summary+"\n<subtopic>");
-//			System.out.println(subtopic.elementAt(j).docNum);
-//		}
-//		System.out.println("finished");
 	}
 	
 	public void merge(Subtopic a, Subtopic b)
@@ -297,10 +307,11 @@ public class TFIDF {
 			}
 		}
 		
-		a.docNum += b.docNum;
-		a.summary += "\n"+b.summary;
 		if (a.start.compareTo(b.start) > 0) a.start = b.start;
 		if (a.end.compareTo(b.end) < 0) a.end = b.end;
+		a.center = (a.center*a.docNum + b.center*b.docNum)/(a.docNum + b.docNum);
+		a.docNum += b.docNum;
+		a.summary += "\n"+b.summary;
 	}
 	
 	public double similarity(Subtopic a, Subtopic b) {
@@ -326,6 +337,95 @@ public class TFIDF {
 		}
 		ret /= Math.sqrt(da*db);
 		return ret;
+	}
+	
+	public String extractSubtopicSummary(Subtopic st)
+	{
+		String[] ss = st.summary.split("\n");
+		String ret = "";
+		Vector<String> summary = new Vector<String>();
+		Vector<Double> value = new Vector<Double>();
+		for (String s : ss)
+		{
+			s = s.substring(11);
+			double temp = 0;
+			String[] terms = s.split(" ");
+			//s = "";
+			for (String term : terms)
+			{
+				if (st.tf.containsKey(term))
+				{
+					temp += st.tf.get(term) * Math.log((double)docTotalNum/((double)df.get(term)));
+				}
+				//s += term.substring(0,term.lastIndexOf('/'));
+			}
+			if (terms.length != 0) temp /= terms.length;
+			int i = 0;
+			for (i = 0; i<summary.size(); i++)
+			{
+				if (simTitle(s,summary.elementAt(i)))
+				{
+					i = -1;
+					break;
+				}
+				if (temp > value.elementAt(i)) break;
+				
+			}
+			if (i == -1) continue;
+			if (i >= summary.size())
+			{
+				if (summary.size() < SummaryTitleNum)
+				{
+					summary.add(s);
+					value.add(temp);
+				}
+			}
+			else
+			{
+				summary.insertElementAt(s, i);
+				value.insertElementAt(temp, i);
+				if (summary.size() > SummaryTitleNum)
+				{
+					summary.remove(summary.size()-1);
+					value.remove(value.size()-1);
+				}
+			}
+		}
+
+		for (int i = 0; i<summary.size(); i++)
+		{
+			if (i != 0) ret += "\n";
+			String[] terms = summary.elementAt(i).split(" ");
+			for (int j = 0; j<terms.length; j++)
+			{
+				ret += terms[j].substring(0, terms[j].lastIndexOf('/'));
+			}
+		}
+		return ret;
+	}
+	
+	public boolean simTitle(String t1, String t2)
+	{
+		HashSet<String> term1 = new HashSet<String>();
+		HashSet<String> term2 = new HashSet<String>();
+		String[] ss;
+		ss = t1.split(" ");
+		for (String term : ss)
+		{
+			term1.add(term);
+		}
+		ss = t2.split(" ");
+		for (String term : ss)
+		{
+			term2.add(term);
+		}
+		double temp = 0;
+		for (String term : term1)
+		{
+			if (term2.contains(term)) temp += 1;
+		}
+		temp /= Math.sqrt(term1.size()*term2.size());
+		return temp >= 0.5;
 	}
 	
 	

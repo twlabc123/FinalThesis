@@ -26,7 +26,7 @@ public class BurstSim extends TFISF {
 	public Vector<Burst> burst;
 	public HashMap<String, Burst> active;
 	public int burstIndex;
-	public double InitClusterThreshold = 0.2;
+	public double InitClusterThreshold = 0.1;
 	public double ThreadingThreshold = InitClusterThreshold;
 	
 	public static void main(String[] args) {
@@ -40,69 +40,23 @@ public class BurstSim extends TFISF {
 		subtopic = new Vector<Subtopic>();
 		sf = new HashMap<String, Integer>();
 		swf = new StopWordFilter();
-		swf.load("data/sogou/tf.csv");
+		swf.load("data/stopwords.txt");
 		burst = new Vector<Burst>();
 		active = new HashMap<String, Burst>();
 		burstIndex = 0;
 	}
 	
-	public void test(String input, String output)
-	{
-		try
-		{
-			int count = 0;
-			FileOutputStream stream = new FileOutputStream(output);
-			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
-			PrintWriter writer = new PrintWriter(sw);
-			FileInputStream istream = new FileInputStream(input);
-			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
-			BufferedReader reader = new BufferedReader(sr);
-			Event e;
-			Vector<Event> initData = new Vector<Event>();
-			while ((e = Event.readEvent(reader)) != null)
-			{
-				initData.add(e);
-				count++;
-				if (count >= 100) break;
-			}
-			init(initData, writer);
-			System.out.println("Threading");
-			Threading(reader, writer);
-			System.out.println("Threading finished");
-			int sum = 0;
-			for (int j = 0; j<subtopic.size(); j++)
-			{
-				Subtopic st = subtopic.elementAt(j);
-				if (st.docNum < 50) continue;
-				sum++;
-				writer.println("<subtopic>");
-				writer.println(extractSubtopicSummary(st));
-				writer.println(st.docNum + " " + st.start.substring(0,10) + " " + st.end.substring(0,10));
-				writer.println(st.summary);
-				writer.println("</subtopic>");
-				System.out.println(st.docNum);
-			}
-			System.out.println("Total subtopics : "+subtopic.size());
-			System.out.println("Big subtopics : "+sum);
-			System.out.println("finished");
-			reader.close();
-			writer.close();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	public void init(Vector<Event> event, PrintWriter writer) throws Exception
+	public void init(Vector<Event> event) throws Exception
 	{
 		this.loadBurst("data/final/news_burst_test.txt");
 		for (int i = 0; i<event.size(); i++)
 		{
 			Subtopic st = new Subtopic();
+			stNum++;
 			Event e = event.elementAt(i);
 			st.start = e.start;
 			st.end = e.end;
+			st.center = e.center;
 			while (burstIndex < burst.size() && burst.elementAt(burstIndex).start.compareTo(st.end.substring(0,10))<=0)
 			{
 				active.put(burst.elementAt(burstIndex).term, burst.elementAt(burstIndex));
@@ -113,7 +67,8 @@ public class BurstSim extends TFISF {
 			{
 				ArticleExtend a = e.article.elementAt(j);
 				st.docNum++;
-				if (st.summary.length() != 0) st.summary += "\n"+a.title; else st.summary += a.title;
+				if (st.summary.length() != 0) st.summary += "\n";
+				st.summary += a.time.substring(0,10) + " " + a.title;
 				String[] ss = a.content.split(" ");
 				HashSet<String> temp2 = new HashSet<String>();
 				for (int k = 0; k<ss.length; k++)
@@ -166,37 +121,10 @@ public class BurstSim extends TFISF {
 			}
 			subtopic.add(st);
 		}
-		initCluster(writer);
+		initCluster();
 	}
 	
-	public void initCluster(PrintWriter writer) throws Exception
-	{
-		int i = 1;
-		while (i < subtopic.size())
-		{
-			double sim = 0;
-			int mergeTo = -1;
-			for (int j = 0; j<i; j++)
-			{
-				double tempsim = similarity(subtopic.elementAt(j), subtopic.elementAt(i));
-				if (tempsim > InitClusterThreshold && tempsim > sim)
-				{
-					mergeTo = j;
-					sim = tempsim;
-				}
-			}
-			
-			if (mergeTo != -1)
-			{
-				merge(subtopic.elementAt(mergeTo), subtopic.elementAt(i));
-				subtopic.remove(i);
-				i--;
-			}
-			i++;
-		}
-	}
-	
-	public void Threading(BufferedReader reader, PrintWriter writer)
+	public void Threading(BufferedReader reader)
 	{
 		try
 		{	
@@ -205,8 +133,10 @@ public class BurstSim extends TFISF {
 			while ((e = Event.readEvent(reader)) != null )
 			{
 				Subtopic st = new Subtopic();
+				stNum++;
 				st.start = e.start;
 				st.end = e.end;
+				st.center = e.center;
 				HashSet<String> remove = new HashSet<String>();
 				for (String term : active.keySet())
 				{
@@ -230,7 +160,8 @@ public class BurstSim extends TFISF {
 					
 					ArticleExtend a = e.article.elementAt(j);
 					st.docNum++;
-					if (st.summary.length() != 0) st.summary += "\n"+a.title; else st.summary += a.title;
+					if (st.summary.length() != 0) st.summary += "\n";
+					st.summary += a.time.substring(0,10) + " " + a.title;
 					String[] ss = a.content.split(" ");
 					HashSet<String> temp2 = new HashSet<String>();
 					for (int k = 0; k<ss.length; k++)
@@ -282,17 +213,7 @@ public class BurstSim extends TFISF {
 					}
 				}
 				
-				double sim = 0;
-				int mergeTo = -1;
-				for (int i = 0; i<subtopic.size(); i++)
-				{
-					double tempsim = similarity(subtopic.elementAt(i), st);
-					if (tempsim > ThreadingThreshold && tempsim > sim)
-					{
-						mergeTo = i;
-						sim = tempsim;
-					}
-				}
+				int mergeTo = computeSim(st);
 				
 				if (mergeTo != -1)
 				{
@@ -304,7 +225,6 @@ public class BurstSim extends TFISF {
 				}
 				count++;
 				if (count % 100 == 0) System.out.println(count);
-				if (count > TestSample) break;
 			}
 		}
 		catch (Exception e)
@@ -354,19 +274,24 @@ public class BurstSim extends TFISF {
 			double tempb = 0;
 			if (a.tf.containsKey(term) && isActive(term, a.start, a.end))
 			{
-				//tempa = a.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));//tf-isf
-				tempa = 1.0;
+				tempa = a.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));//tf-isf
+				//tempa = 1.0;
 			}
 			if (b.tf.containsKey(term) && isActive(term, b.start, b.end))
 			{
-				//tempb = b.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));// tf-isf
-				tempb = 1.0;
+				tempb = b.tf.get(term) * Math.log((double)subtopic.size()/((double)sf.get(term)));// tf-isf
+				//tempb = 1.0;
 			}
-			da += tempa;
-			db += tempb;
+			da += tempa*tempa;
+			db += tempb*tempb;
 			ret += tempa*tempb;
 		}
-		if (da*db != 0)	ret /= Math.sqrt(da*db);
+		if (da*db >= 0.001)	ret /= Math.sqrt(da*db);
+		else
+		{
+			if (da <= 0.001) a.active = false;
+			return 0;
+		}
 		return ret;
 	}
 	
