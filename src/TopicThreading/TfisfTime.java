@@ -24,7 +24,7 @@ public class TfisfTime extends TFISF {
 		// TODO Auto-generated method stub
 		TfisfTime t = new TfisfTime();
 		t.ThreadingThreshold *= Math.exp(t.alpha);
-		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf_time_merge_2.txt");
+		t.test("data/final/news_lc_test.txt", "data/final/news_lc_test_tfisf_time_merge_2.txt");
 	}
 	
 	public double similarity(Subtopic a, Subtopic b) throws Exception {
@@ -62,6 +62,8 @@ public class TfisfTime extends TFISF {
 		}
 		
 		ret /= Math.sqrt(da*db);
+		
+		//new java.util.Scanner(System.in).nextLine();
 		
 		
 		// Different from TFISF

@@ -15,6 +15,7 @@ public class Subtopic {
 	public String end;
 	public long center;
 	public int docNum;
+	public int eventNum;
 	public String summary;
 	public boolean active;
 	
@@ -26,6 +27,7 @@ public class Subtopic {
 		end = "";
 		summary = "";
 		docNum = 0;
+		eventNum = 0;
 		active = true;
 	}
 	
@@ -34,7 +36,7 @@ public class Subtopic {
 		writer.println("<subtopic>\n============");
 		writer.println(model.extractSubtopicSummary(this));
 		writer.println("============");
-		writer.println(docNum + " " + start.substring(0,10) + " " + end.substring(0,10));
+		writer.println(eventNum + " " + docNum + " " + start.substring(0,10) + " " + end.substring(0,10));
 		Date d = new Date();
 		d.setTime(center*3600*1000);
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -42,6 +44,7 @@ public class Subtopic {
 		writer.println(summary);
 		writer.println("</subtopic>");
 		model.docNums.add(docNum);
+		model.eventNums.add(eventNum);
 	}
 
 }

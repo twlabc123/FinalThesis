@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,15 +21,16 @@ import Structure.*;
 
 public class EventClusterTFIDF extends EventCluster {
 
-	ArrayList<ArticleExtend> data;
-	HashMap<String, Integer> idf;
-	HashMap<String, Integer> bgtf;// background tf
+	PrintWriter writer;
+	BufferedReader reader;
+	HashMap<String, Integer> df;
 	int docTotalNum;
 	StopWordFilter swf;
-	Vector<ArticleExtend> leaders = new Vector<ArticleExtend>();
-	Vector<Vector<Article>> outputData = new Vector<Vector<Article>>();
-	double Threshold = 0.20;
-	//double Same = 0.90;
+	//Vector<ArticleExtend> leaders;// only for offline implementation
+	//Vector<Vector<Article>> outputData;// only for offline implemetation
+	
+	double Threshold = 0.80;//cluster threshold
+	int Effective = 5;//Event with more than Effective articles is effective
 	int Delta = 3;//span of the time window
 	
 	/**
@@ -37,9 +39,7 @@ public class EventClusterTFIDF extends EventCluster {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		EventClusterTFIDF ec = new EventClusterTFIDF();
-		//ec.filtNoise("data/news_split_sort_cut.txt", "data/news_split_sort_cut_filted.txt", "data/similarity.txt");
-		//ec.leaderCluster("data/test/line1498.txt", "data/test/line1498_lc.txt");
-		ec.leaderCluster("data/final/news.txt", "data/final/news_lc.txt");
+		//ec.leaderCluster("data/final/news.txt", "data/final/news_lc_test.txt");
 	}
 	
 	@Override
@@ -48,150 +48,45 @@ public class EventClusterTFIDF extends EventCluster {
 		double ret = 0;
 		double da = 0.0;
 		double db = 0.0;
-		HashMap<String, Integer> btf = (b == null) ? bgtf : b.tf;
+		int mergeSize = 0;
 		HashMap<String, Double> temp = new HashMap<String, Double>();
 		for (String term : a.tf.keySet())
 		{
-			double tempa = a.tf.get(term) * Math.log((double)docTotalNum/((double)idf.get(term)+1));
+			//double tempa = a.tf.get(term) * Math.log((double)docTotalNum/((double)df.get(term)+1));
+			double tempa = 1;
 			da += tempa*tempa;
 			temp.put(term, tempa);
+			mergeSize++;
 		}
-		for (String term : btf.keySet())
+		for (String term : b.tf.keySet())
 		{
-			double tempb = btf.get(term) * Math.log((double)docTotalNum/((double)idf.get(term)+1));
+			//double tempb = btf.get(term) * Math.log((double)docTotalNum/((double)df.get(term)+1));
+			double tempb = 1;
 			db += tempb*tempb;
 			if (temp.containsKey(term))
 			{
 				ret += temp.get(term).doubleValue() * tempb;
 			}
+			else
+			{
+				mergeSize++;
+			}
 		}
-		ret /= Math.sqrt(da*db);
+		//ret /= Math.sqrt(da*db);
+		ret /= mergeSize;
 		return ret;
 	}
 	
 	EventClusterTFIDF()
 	{
-		data = new ArrayList<ArticleExtend>();
-		idf = new HashMap<String, Integer>();
-		bgtf = new HashMap<String, Integer>();
+		df = new HashMap<String, Integer>();
 		docTotalNum = 0;
 		swf = new StopWordFilter();
-		swf.load("data/sogou/tf.csv");
+		swf.load("data/stopwords.txt");
 	}
+
 	
-	public void load(String input)
-	{
-		try {
-			FileInputStream istream = new FileInputStream(input);
-			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
-			BufferedReader reader = new BufferedReader(sr);
-			ArticleExtend a;
-			int count = 0;
-			while ((a = (ArticleExtend)ArticleExtend.readArticle(reader)) != null)
-			{
-				docTotalNum++;
-				HashSet<String> termSet = new HashSet<String>();
-				String[] term = a.content.split(" ");
-				for (int i = 0; i<term.length; i++)
-				{
-					if (swf.isStopWord(term[i])) continue;
-					if (bgtf.containsKey(term[i]))
-					{
-						Integer temp = bgtf.get(term[i]);
-						bgtf.remove(term[i]);
-						bgtf.put(term[i], temp+1);
-					}
-					else
-					{
-						bgtf.put(term[i], 1);
-					}
-					if (!termSet.contains(term[i]))
-					{
-						termSet.add(term[i]);
-						if (idf.containsKey(term[i]))
-						{
-							Integer temp = idf.get(term[i]);
-							idf.remove(term[i]);
-							idf.put(term[i], temp+1);
-						}
-						else
-						{
-							idf.put(term[i],1);
-						}
-					}
-				}
-				count++;
-				if (count % 1000 == 0)
-				{
-					System.out.println(count);
-				}
-			}
-			reader.close();
-			System.out.println("Load Finish.");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public void filtNoise(String input, String output, String similarity)
-	{
-		try
-		{
-			this.load(input);
-			FileOutputStream stream = new FileOutputStream(output);
-			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
-			PrintWriter writer = new PrintWriter(sw);
-			FileOutputStream stream2 = new FileOutputStream(similarity);
-			OutputStreamWriter sw2 = new OutputStreamWriter(stream2, "utf-8");
-			PrintWriter writer2 = new PrintWriter(sw2);
-			FileInputStream istream = new FileInputStream(input);
-			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
-			BufferedReader reader = new BufferedReader(sr);
-			ArticleExtend a;
-			int count = 0;
-			while ((a = (ArticleExtend)ArticleExtend.readArticle(reader)) != null)
-			{
-				String[] term = a.content.split(" ");
-				for (int i = 0; i<term.length; i++)
-				{
-					if (swf.isStopWord(term[i])) continue;
-					if (a.tf.containsKey(term[i]))
-					{
-						Integer temp = a.tf.get(term[i]);
-						a.tf.remove(term[i]);
-						a.tf.put(term[i], temp+1);
-					}
-					else
-					{
-						a.tf.put(term[i], 1);
-					}
-				}
-				if (this.similarity(a, null) > 0.1)
-				{
-					a.printArticle(writer);
-				}
-				else
-				{
-					writer2.println(a.title);
-					writer2.println(this.similarity(a, null));
-				}
-				count++;
-				if (count % 100 == 0)
-				{
-					System.out.println(count);
-				}
-				//break;
-			}
-			writer.close();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	public void leaderCluster(String input, String output)
+	/*public void leaderCluster(String input, String output)// offline implementation
 	{
 		try
 		{
@@ -200,7 +95,7 @@ public class EventClusterTFIDF extends EventCluster {
 			//this.load(input);
 			FileOutputStream stream = new FileOutputStream(output);
 			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
-			PrintWriter writer = new PrintWriter(sw);
+			writer = new PrintWriter(sw);
 			FileInputStream istream = new FileInputStream(input);
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			BufferedReader reader = new BufferedReader(sr);
@@ -237,15 +132,15 @@ public class EventClusterTFIDF extends EventCluster {
 					if (!termSet.contains(term[i]))
 					{
 						termSet.add(term[i]);
-						if (idf.containsKey(term[i]))
+						if (df.containsKey(term[i]))
 						{
-							Integer temp = idf.get(term[i]);
-							idf.remove(term[i]);
-							idf.put(term[i], temp+1);
+							Integer temp = df.get(term[i]);
+							df.remove(term[i]);
+							df.put(term[i], temp+1);
 						}
 						else
 						{
-							idf.put(term[i],1);
+							df.put(term[i],1);
 						}
 					}
 				}
@@ -268,43 +163,51 @@ public class EventClusterTFIDF extends EventCluster {
 				}
 				else
 				{
-					int i;
+					int mergeTo = -1;
+					double max = -1;
+					int deleteIndex = -1;
 					SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-					Date d1 = format.parse(a.time.substring(0,11));
-					for (i = leaders.size()-1; i >= 0; i--)
+					Date d1 = format.parse(a.time.substring(0,10));
+					for (int i = leaders.size()-1; i >= 0; i--)
 					{
-						Date d2 = format.parse(leaders.elementAt(i).time.substring(0,11));
+						Date d2 = format.parse(leaders.elementAt(i).time.substring(0,10));
 						int delta = (int) ((d1.getTime() - d2.getTime()) / (24 * 60 * 60 * 1000));
 						if (delta >= Delta)
 						{
-							for (int j = 0; j<=i; j++)
-							{
-								writer.println("<event>");
-								for (int k = 0; k<outputData.elementAt(0).size(); k++)
-								{
-									outputData.elementAt(0).elementAt(k).printArticle(writer);
-								}
-								writer.println("</event>");
-								leaders.remove(0);
-								outputData.remove(0);
-							}
-							i = -1;
+							deleteIndex = i;
 							break;
 						}
 						double sim = similarity(a, leaders.elementAt(i));
-						if (sim > Threshold)
+						if (sim > Threshold && sim > max)
 						{
-							//leaders.elementAt(i).content += "\n<"+a.time+">"+a.content;
-							outputData.elementAt(i).add(a.getArticle());
-							break;
+							mergeTo = i;
+							max = sim;
 						}
 					}
-					if (i < 0)
+					if (mergeTo < 0)
 					{
 						leaders.add(a);
 						Vector<Article> temp = new Vector<Article>();
 						temp.add(a.getArticle());
 						outputData.add(temp);
+					}
+					else
+					{
+						outputData.elementAt(mergeTo).add(a.getArticle());
+					}
+					for (int j = 0; j<=deleteIndex; j++)
+					{
+						if (outputData.elementAt(0).size() >= Effective)
+						{
+							writer.println("<event>");
+							for (int k = 0; k<outputData.elementAt(0).size(); k++)
+							{
+								outputData.elementAt(0).elementAt(k).printArticle(writer);
+							}
+							writer.println("</event>");
+						}
+						leaders.remove(0);
+						outputData.remove(0);
 					}
 				}
 			}
@@ -323,6 +226,88 @@ public class EventClusterTFIDF extends EventCluster {
 		catch (Exception e)
 		{
 			e.printStackTrace();
+		}
+	}*/
+	
+	public void processBatch(Vector<ArticleExtend> docs, Vector<ActiveEvent> activeEvent) throws Exception
+	{
+		int deleteIndex = -1;
+		for (int articleIndex = 0; articleIndex<docs.size(); articleIndex++)
+		{
+			ArticleExtend a = docs.elementAt(articleIndex);
+			docTotalNum++;
+			HashSet<String> termSet = new HashSet<String>();
+			String[] term = a.content.split(" ");
+			for (int i = 0; i<term.length; i++)
+			{
+				if (swf.isStopWord(term[i])) continue;
+				if (a.tf.containsKey(term[i]))
+				{
+					Integer temp = a.tf.get(term[i]);
+					a.tf.remove(term[i]);
+					a.tf.put(term[i], temp+1);
+				}
+				else
+				{
+					a.tf.put(term[i], 1);
+				}
+				if (!termSet.contains(term[i]))
+				{
+					termSet.add(term[i]);
+					if (df.containsKey(term[i]))
+					{
+						Integer temp = df.get(term[i]);
+						df.remove(term[i]);
+						df.put(term[i], temp+1);
+					}
+					else
+					{
+						df.put(term[i],1);
+					}
+				}
+			}
+			
+			for (int i = 0; i < activeEvent.size(); i++)
+			{
+				activeEvent.elementAt(i).hasNewDoc = false;
+			}
+			
+			//Event cluster
+			int mergeTo = -1;
+			double max = -1;
+			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+			Date d1 = format.parse(a.time.substring(0,10));
+			for (int i = activeEvent.size()-1; i >= 0; i--)
+			{
+				Date d2 = format.parse(activeEvent.elementAt(i).article.firstElement().time.substring(0,10));
+				int delta = (int) ((d1.getTime() - d2.getTime()) / (24 * 60 * 60 * 1000));
+				if (delta >= Delta)
+				{
+					if (articleIndex == 0) deleteIndex = i;
+					break;
+				}
+				double sim = similarity(a, activeEvent.elementAt(i).article.firstElement());
+				if (sim > Threshold && sim > max)
+				{
+					mergeTo = i;
+					max = sim;
+				}
+			}
+			if (mergeTo < 0)
+			{
+				ActiveEvent e = new ActiveEvent();
+				e.addArticle(a);
+				activeEvent.add(e);
+			}
+			else
+			{
+				a.tf = new HashMap<String, Integer>();//It is not a leader, so we don't habe to save tf-table.
+				activeEvent.elementAt(mergeTo).addArticle(a);
+			}
+		}
+		for (int j = 0; j<=deleteIndex; j++)
+		{
+			activeEvent.remove(0);
 		}
 	}
 

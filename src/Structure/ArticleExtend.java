@@ -57,7 +57,6 @@ public class ArticleExtend extends Article {
 		ret.time = time;
 		ret.title = title;
 		ret.url = url;
-		ret.type = type;
 		return ret;
 	}
 

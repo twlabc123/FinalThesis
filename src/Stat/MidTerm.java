@@ -27,16 +27,18 @@ public class MidTerm {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		File dir = new File("data/mid");
-		File[] files = dir.listFiles();
-		for (int i = 0; i<files.length; i++)
-		{
-			if (files[i].getName().startsWith("stat")) continue;
-			System.out.println(files[i].getName());
-			MidTerm mt = new MidTerm();
-			String input = files[i].getName();
-			mt.run("data/mid/"+input, "data/mid/stat_"+input);
-		}
+//		File dir = new File("data/mid");
+//		File[] files = dir.listFiles();
+//		for (int i = 0; i<files.length; i++)
+//		{
+//			if (files[i].getName().startsWith("stat")) continue;
+//			System.out.println(files[i].getName());
+//			MidTerm mt = new MidTerm();
+//			String input = files[i].getName();
+//			mt.run("data/mid/"+input, "data/mid/stat_"+input);
+//		}
+		MidTerm mt = new MidTerm();
+		mt.run("data/final/news_lc_test_tfisf_time_merge_2.txt", "data/stat/stat_news_lc_test_tfisf_time_merge_2.txt");
 	}
 	
 	public MidTerm()
@@ -71,9 +73,10 @@ public class MidTerm {
 						line = reader.readLine();
 					}
 					line = reader.readLine();
-					st.docNum = Integer.parseInt(line.split(" ")[0]);
-					st.start = line.split(" ")[1];
-					st.end = line.split(" ")[2];
+					st.eventNum = Integer.parseInt(line.split(" ")[0]);
+					st.docNum = Integer.parseInt(line.split(" ")[1]);
+					st.start = line.split(" ")[2];
+					st.end = line.split(" ")[3];
 					line = reader.readLine();
 					st.center = Integer.parseInt(line.split(" ")[0]);
 					line = reader.readLine();

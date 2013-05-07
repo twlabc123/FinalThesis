@@ -19,7 +19,6 @@ public class Article  implements Comparable{
 	public String source;
 	public String content;
 	public String time;
-	public String type;
 	
 	Article()
 	{
@@ -28,7 +27,6 @@ public class Article  implements Comparable{
 		source = "";
 		content = "";
 		time = "";
-		type = "";
 	}
 	
 	public int compare(Object arg0, Object arg1)
