@@ -1,24 +1,15 @@
 package TopicThreading;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.text.ParseException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Vector;
 
 import DataPrepare.StopWordFilter;
-import Structure.Article;
+import Structure.ActiveEvent;
 import Structure.ArticleExtend;
-import Structure.Event;
 import Structure.Subtopic;
+import System.ActiveEventModule;
 
 public class TFISF {
 
@@ -27,21 +18,23 @@ public class TFISF {
 	public int stNum;
 	public int bigStNum;
 	public StopWordFilter swf;
+	public PrintWriter writer;
+	public Vector<Integer> docNums;//just for screen output
+	public Vector<Integer> eventNums;//just for screen output
+	public ActiveEventModule activeEventModule;
+	
 	public double InitClusterThreshold = 0.05;
 	public double ThreadingThreshold = InitClusterThreshold;
 	public int SummaryTitleNum = 3;
 	int Effective = 5;
-	public PrintWriter writer;
-	public Vector<Integer> docNums;//just for screen output
-	public Vector<Integer> eventNums;//just for screen output
 	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		TFISF t = new TFISF();
-		t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf.txt");
+		//TFISF t = new TFISF();
+		//t.test("data/final/news_lc.txt", "data/final/news_lc_test_tfisf.txt");
 	}
 	
 	TFISF()
@@ -54,9 +47,23 @@ public class TFISF {
 		swf.load("data/stopwords.txt");
 		docNums = new Vector<Integer>();
 		eventNums = new Vector<Integer>();
+		activeEventModule = null;
 	}
 	
-	public void test(String input, String output)
+	TFISF(ActiveEventModule a)
+	{
+		subtopic = new Vector<Subtopic>();
+		sf = new HashMap<String, Integer>();
+		swf = new StopWordFilter();
+		stNum = 0;
+		bigStNum = 0;
+		swf.load("data/stopwords.txt");
+		docNums = new Vector<Integer>();
+		eventNums = new Vector<Integer>();
+		activeEventModule = a;
+	}
+	
+	/*public void test(String input, String output)
 	{
 		try
 		{
@@ -295,55 +302,6 @@ public class TFISF {
 		updateModel(st);
 	}
 	
-	public void updateModel(Subtopic st) throws Exception
-	{
-		int mergeTo = computeSim(st);
-		
-		if (mergeTo != -1)
-		{
-			merge(subtopic.elementAt(mergeTo), st);
-		}
-		else
-		{
-			subtopic.add(st);
-		}
-	}
-	
-	public int computeSim(Subtopic st) throws Exception
-	{
-		double sim = 0;
-		int mergeTo = -1;
-		for (int i = 0; i<subtopic.size(); i++)
-		{
-			if (!subtopic.elementAt(i).active) continue;
-			double tempsim = similarity(subtopic.elementAt(i), st);
-			if (tempsim > ThreadingThreshold && tempsim > sim)
-			{
-				mergeTo = i;
-				sim = tempsim;
-			}
-		}
-		int i = 0;
-		while (i < subtopic.size())
-		{
-			if (!subtopic.elementAt(i).active)
-			{
-				if (subtopic.elementAt(i).docNum > Effective)
-				{
-					subtopic.elementAt(i).printSubtopic(writer, this);
-				}
-				if (subtopic.elementAt(i).docNum >= 20) bigStNum++;
-				subtopic.remove(i);
-				if (mergeTo > i) mergeTo--;
-				i--;
-			}
-			i++;
-		}
-		return mergeTo;
-	}
-	
-	
-	
 	public void merge(Subtopic a, Subtopic b) throws Exception // merge b into a, but not responsible to delete/remove b. User should delete/remove b in calling function
 	{
 		for (String term : b.tf.keySet())
@@ -379,9 +337,10 @@ public class TFISF {
 			{
 				a.df.put(term, b.df.get(term));
 			}
-			
-			
 		}
+		
+		a.eventId.addAll(b.eventId);
+		
 		
 		if (a.start.compareTo(b.start) > 0) a.start = b.start;
 		if (a.end.compareTo(b.end) < 0) a.end = b.end;
@@ -390,6 +349,194 @@ public class TFISF {
 		a.eventNum += b.eventNum;
 		a.summary += "\n"+b.summary;
 		stNum--;
+	}
+	*/
+	
+	public void processBatch(Vector<ActiveEvent> activeEvent)
+	{
+		try
+		{
+			for (int i = 0; i<activeEvent.size(); i++)
+			{
+				ActiveEvent ae = activeEvent.elementAt(i);
+				if (ae.hasNewDoc) addEvent(ae);
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	void addEvent(ActiveEvent e) throws Exception
+	{
+		Subtopic st = new Subtopic(e);
+		stNum++;
+		HashSet<String> temp = new HashSet<String>();
+		for (int j = 0; j<e.article.size(); j++)
+		{
+			ArticleExtend a = e.article.elementAt(j);
+			if (st.summary.length() != 0) st.summary += "\n";
+			st.summary += a.time.substring(0,10) + " " + a.title;
+			String[] ss = a.content.split(" ");
+			HashSet<String> temp2 = new HashSet<String>();
+			for (int k = 0; k<ss.length; k++)
+			{
+				String term = ss[k];
+				if (swf.isStopWord(term)) continue;
+				
+				if (st.tf.containsKey(term))
+				{
+					Integer tempI = st.tf.get(term);
+					st.tf.remove(term);
+					st.tf.put(term, tempI+1);
+				}
+				else
+				{
+					st.tf.put(term, 1);
+				}
+				
+				if (!temp.contains(term))
+				{						
+					if (sf.containsKey(term))
+					{
+						Integer tempI = sf.get(term);
+						sf.remove(term);
+						sf.put(term, tempI+1);
+					}
+					else
+					{
+						sf.put(term, 1);
+					}
+					temp.add(term);
+				}
+				
+				if (!temp2.contains(term))
+				{
+					if (st.df.containsKey(term))
+					{
+						Integer tempI = st.df.get(term);
+						st.df.remove(term);
+						st.df.put(term, tempI+1);
+					}
+					else
+					{
+						st.df.put(term, 1);
+					}
+					temp2.add(term);
+				}
+				
+			}
+		}
+		updateModel(st);
+	}
+	
+	void updateModel(Subtopic st) throws Exception
+	{
+		int mergeTo = computeSim(st);
+		subtopic.add(st);
+		for (int i = 0; i<st.eventId.size(); i++)
+		{
+			activeEventModule.linkEventToSubtopic(st.eventId.elementAt(i), subtopic.size()-1);
+		}
+		if (mergeTo != -1)
+		{
+			merge(mergeTo, subtopic.size()-1);
+		}
+		int i = 0;
+		while (i < subtopic.size())
+		{
+			if (!subtopic.elementAt(i).active)
+			{
+				if (subtopic.elementAt(i).docNum > Effective)
+				{
+					subtopic.elementAt(i).printSubtopic(writer, this);
+					bigStNum++;
+				}
+				activeEventModule.removeSubtopic(i);
+				subtopic.remove(i);
+				i--;
+			}
+			i++;
+		}
+	}
+	
+	int computeSim(Subtopic st) throws Exception
+	{
+		double sim = 0;
+		int mergeTo = -1;
+		for (int i = 0; i<subtopic.size(); i++)
+		{
+			if (!subtopic.elementAt(i).active) continue;
+			double tempsim = similarity(subtopic.elementAt(i), st);
+			if (tempsim > ThreadingThreshold && tempsim > sim)
+			{
+				mergeTo = i;
+				sim = tempsim;
+			}
+		}
+		return mergeTo;
+	}
+	
+	
+	
+	void merge(int mergeTo, int mergeIndex) throws Exception
+	{
+		Subtopic a = subtopic.elementAt(mergeTo);
+		Subtopic b = subtopic.elementAt(mergeIndex);
+		for (String term : b.tf.keySet())
+		{
+			if (sf.containsKey(term))
+			{
+				if (a.tf.containsKey(term))
+				{
+					Integer temp = sf.get(term);
+					sf.remove(term);
+					sf.put(term, temp-1);
+				}
+			}
+			
+			if (a.tf.containsKey(term))
+			{
+				Integer temp = a.tf.get(term);
+				a.tf.remove(term);
+				a.tf.put(term, temp+b.tf.get(term));
+			}
+			else
+			{
+				a.tf.put(term, b.tf.get(term));
+			}
+			
+			if (a.df.containsKey(term))
+			{
+				Integer temp = a.df.get(term);
+				a.df.remove(term);
+				a.df.put(term, temp+b.df.get(term));
+			}
+			else
+			{
+				a.df.put(term, b.df.get(term));
+			}
+		}
+		for (int i = 0; i<b.eventId.size(); i++)
+		{
+			activeEventModule.delinkEventToSubtopic(b.eventId.elementAt(i), mergeIndex);
+			activeEventModule.linkEventToSubtopic(b.eventId.elementAt(i), mergeTo);
+		}
+		a.eventId.addAll(b.eventId);
+		
+		if (a.start.compareTo(b.start) > 0) a.start = b.start;
+		if (a.end.compareTo(b.end) < 0) a.end = b.end;
+		a.center = (a.center*a.docNum + b.center*b.docNum)/(a.docNum + b.docNum);
+		a.docNum += b.docNum;
+		a.eventNum += b.eventNum;
+		a.summary += "\n"+b.summary;
+		stNum--;
+		
+		activeEventModule.removeSubtopic(mergeIndex);
+		subtopic.remove(mergeIndex);
+		
+		
 	}
 	
 	public double similarity(Subtopic a, Subtopic b) throws Exception {// a should be the former subtopic and b should be the newer one.
@@ -485,7 +632,7 @@ public class TFISF {
 		return ret;
 	}
 	
-	public boolean simTitle(String t1, String t2)
+	boolean simTitle(String t1, String t2)
 	{
 		HashSet<String> term1 = new HashSet<String>();
 		HashSet<String> term2 = new HashSet<String>();

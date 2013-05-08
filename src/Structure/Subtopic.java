@@ -4,6 +4,8 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 
 import TopicThreading.TFISF;
 
@@ -11,6 +13,7 @@ public class Subtopic {
 	
 	public HashMap<String, Integer> tf;
 	public HashMap<String, Integer> df;
+	public Vector<Integer> eventId;
 	public String start;
 	public String end;
 	public long center;
@@ -19,15 +22,32 @@ public class Subtopic {
 	public String summary;
 	public boolean active;
 	
+	public Subtopic(ActiveEvent e)
+	{
+		tf = new HashMap<String, Integer>();
+		df = new HashMap<String, Integer>();
+		eventId = new Vector<Integer>();
+		eventId.add(e.id);
+		this.start = e.start;
+		this.end = e.end;
+		this.center = e.center;
+		this.docNum = e.article.size();
+		this.eventNum = 1;
+		this.summary = "";
+		this.active = true;
+	}
+	
 	public Subtopic()
 	{
 		tf = new HashMap<String, Integer>();
 		df = new HashMap<String, Integer>();
+		eventId = new Vector<Integer>();
+		eventId = new Vector<Integer>();
 		start = "";
 		end = "";
-		summary = "";
 		docNum = 0;
 		eventNum = 0;
+		summary = "";
 		active = true;
 	}
 	

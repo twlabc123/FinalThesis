@@ -17,7 +17,6 @@ import Structure.Event;
 import Structure.Subtopic;
 
 public class TFIDF extends TFISF {
-	//这段应该重用TFISF部分或者反之，但一开始写的时候写挫了……
 
 	public Vector<Subtopic> subtopic;
 	public HashMap<String, Integer> df;

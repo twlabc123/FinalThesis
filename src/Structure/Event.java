@@ -9,6 +9,8 @@ import java.util.Vector;
 
 public class Event {
 	
+	public static int TotalEventNum = 0;
+	public int id;
 	public Vector<ArticleExtend> article;
 	public String start;
 	public String end;

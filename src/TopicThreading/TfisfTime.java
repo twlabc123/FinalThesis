@@ -1,30 +1,27 @@
 package TopicThreading;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.ParseException;
 import java.util.HashMap;
-import java.util.HashSet;
-
-import Structure.Article;
-import Structure.ArticleExtend;
-import Structure.Event;
 import Structure.Subtopic;
+import System.ActiveEventModule;
 
 public class TfisfTime extends TFISF {
 	
 	
 	double alpha = -0.02; // time fix with e^(-alpha*interval)
 
+	public TfisfTime(ActiveEventModule aem) {
+		// TODO Auto-generated constructor stub
+		super(aem);
+	}
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		TfisfTime t = new TfisfTime();
-		t.ThreadingThreshold *= Math.exp(t.alpha);
-		t.test("data/final/news_lc_test.txt", "data/final/news_lc_test_tfisf_time_merge_2.txt");
+		//TfisfTime t = new TfisfTime();
+		//t.ThreadingThreshold *= Math.exp(t.alpha);
+		//t.test("data/final/news_lc_test.txt", "data/final/news_lc_test_tfisf_time_merge_2.txt");
 	}
 	
 	public double similarity(Subtopic a, Subtopic b) throws Exception {

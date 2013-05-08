@@ -77,7 +77,7 @@ public class EventClusterTFIDF extends EventCluster {
 		return ret;
 	}
 	
-	EventClusterTFIDF()
+	public EventClusterTFIDF()
 	{
 		df = new HashMap<String, Integer>();
 		docTotalNum = 0;
@@ -296,6 +296,8 @@ public class EventClusterTFIDF extends EventCluster {
 			if (mergeTo < 0)
 			{
 				ActiveEvent e = new ActiveEvent();
+				e.id = Event.TotalEventNum;
+				Event.TotalEventNum++;
 				e.addArticle(a);
 				activeEvent.add(e);
 			}

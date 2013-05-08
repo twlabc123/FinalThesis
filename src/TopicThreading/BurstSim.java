@@ -31,8 +31,8 @@ public class BurstSim extends TFISF {
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		BurstSim bs = new BurstSim();
-		bs.test("data/final/news_lc.txt", "data/final/news_lc_test_burstsim.txt");
+		//BurstSim bs = new BurstSim();
+		//bs.test("data/final/news_lc.txt", "data/final/news_lc_test_burstsim.txt");
 	}
 	
 	public BurstSim()
@@ -46,7 +46,7 @@ public class BurstSim extends TFISF {
 		burstIndex = 0;
 	}
 	
-	public void init(Vector<Event> event) throws Exception
+	/*public void init(Vector<Event> event) throws Exception
 	{
 		this.loadBurst("data/final/news_burst_test.txt");
 		for (int i = 0; i<event.size(); i++)
@@ -217,7 +217,7 @@ public class BurstSim extends TFISF {
 				
 				if (mergeTo != -1)
 				{
-					merge(subtopic.elementAt(mergeTo), st);
+					merge(mergeTo, st);
 				}
 				else
 				{
@@ -293,7 +293,7 @@ public class BurstSim extends TFISF {
 			return 0;
 		}
 		return ret;
-	}
+	}*/
 	
 	
 
