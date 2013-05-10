@@ -4,7 +4,7 @@ import java.util.Vector;
 
 public class ActiveEvent extends Event {
 	
-	public Vector<Integer> stIndex;//the indexes of the subtopics that contains the event
+	public Vector<Integer> stId;//the indexes of the subtopics that contains the event
 	
 
 	/**
@@ -17,13 +17,13 @@ public class ActiveEvent extends Event {
 	public ActiveEvent()
 	{
 		super();
-		stIndex = new Vector<Integer>();
+		stId = new Vector<Integer>();
 	}
 	
 	public ActiveEvent(Event e)
 	{
 		super(e);
-		stIndex = new Vector<Integer>();
+		stId = new Vector<Integer>();
 	}
 
 }

@@ -1,23 +1,18 @@
 package EventCluster;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Vector;
 
 import DataPrepare.StopWordFilter;
 import Structure.*;
+import System.ActiveEventModule;
 
 public class EventClusterTFIDF extends EventCluster {
 
@@ -26,8 +21,9 @@ public class EventClusterTFIDF extends EventCluster {
 	HashMap<String, Integer> df;
 	int docTotalNum;
 	StopWordFilter swf;
-	//Vector<ArticleExtend> leaders;// only for offline implementation
-	//Vector<Vector<Article>> outputData;// only for offline implemetation
+	ActiveEventModule aem;
+	//Vector<ArticleExtend> leaders;// only for off-line implementation
+	//Vector<Vector<Article>> outputData;// only for off-line implementation
 	
 	double Threshold = 0.80;//cluster threshold
 	int Effective = 5;//Event with more than Effective articles is effective
@@ -38,43 +34,8 @@ public class EventClusterTFIDF extends EventCluster {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		EventClusterTFIDF ec = new EventClusterTFIDF();
+		//EventClusterTFIDF ec = new EventClusterTFIDF();
 		//ec.leaderCluster("data/final/news.txt", "data/final/news_lc_test.txt");
-	}
-	
-	@Override
-	public double similarity(ArticleExtend a, ArticleExtend b) { // if b == null, use bgtf;
-		// TODO Auto-generated method stub
-		double ret = 0;
-		double da = 0.0;
-		double db = 0.0;
-		int mergeSize = 0;
-		HashMap<String, Double> temp = new HashMap<String, Double>();
-		for (String term : a.tf.keySet())
-		{
-			//double tempa = a.tf.get(term) * Math.log((double)docTotalNum/((double)df.get(term)+1));
-			double tempa = 1;
-			da += tempa*tempa;
-			temp.put(term, tempa);
-			mergeSize++;
-		}
-		for (String term : b.tf.keySet())
-		{
-			//double tempb = btf.get(term) * Math.log((double)docTotalNum/((double)df.get(term)+1));
-			double tempb = 1;
-			db += tempb*tempb;
-			if (temp.containsKey(term))
-			{
-				ret += temp.get(term).doubleValue() * tempb;
-			}
-			else
-			{
-				mergeSize++;
-			}
-		}
-		//ret /= Math.sqrt(da*db);
-		ret /= mergeSize;
-		return ret;
 	}
 	
 	public EventClusterTFIDF()
@@ -83,6 +44,18 @@ public class EventClusterTFIDF extends EventCluster {
 		docTotalNum = 0;
 		swf = new StopWordFilter();
 		swf.load("data/stopwords.txt");
+	}
+	
+	public EventClusterTFIDF(ActiveEventModule aem, String output) throws Exception
+	{
+		df = new HashMap<String, Integer>();
+		docTotalNum = 0;
+		swf = new StopWordFilter();
+		swf.load("data/stopwords.txt");
+		this.aem = aem;
+		FileOutputStream stream = new FileOutputStream(output);
+		OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
+		writer = new PrintWriter(sw);
 	}
 
 	
@@ -232,6 +205,10 @@ public class EventClusterTFIDF extends EventCluster {
 	public void processBatch(Vector<ArticleExtend> docs, Vector<ActiveEvent> activeEvent) throws Exception
 	{
 		int deleteIndex = -1;
+		for (int i = 0; i < activeEvent.size(); i++)
+		{
+			activeEvent.elementAt(i).hasNewDoc = false;
+		}
 		for (int articleIndex = 0; articleIndex<docs.size(); articleIndex++)
 		{
 			ArticleExtend a = docs.elementAt(articleIndex);
@@ -267,11 +244,6 @@ public class EventClusterTFIDF extends EventCluster {
 				}
 			}
 			
-			for (int i = 0; i < activeEvent.size(); i++)
-			{
-				activeEvent.elementAt(i).hasNewDoc = false;
-			}
-			
 			//Event cluster
 			int mergeTo = -1;
 			double max = -1;
@@ -298,19 +270,96 @@ public class EventClusterTFIDF extends EventCluster {
 				ActiveEvent e = new ActiveEvent();
 				e.id = Event.TotalEventNum;
 				Event.TotalEventNum++;
-				e.addArticle(a);
+				e.addArticle(a, this.swf);
 				activeEvent.add(e);
 			}
 			else
 			{
+				aem.removeChangedEventFromSubtopic(activeEvent.elementAt(mergeTo));
 				a.tf = new HashMap<String, Integer>();//It is not a leader, so we don't habe to save tf-table.
-				activeEvent.elementAt(mergeTo).addArticle(a);
+				activeEvent.elementAt(mergeTo).addArticle(a, this.swf);
 			}
 		}
+		
 		for (int j = 0; j<=deleteIndex; j++)
 		{
+			if (activeEvent.firstElement().article.size() >= Effective)
+			{
+				ActiveEvent ae = activeEvent.firstElement();
+				writer.println("<event>");
+				writer.println("<id>"+ae.id+"</id>");
+				writer.println("<start>"+ae.start+"</start>");
+				writer.println("<end>"+ae.end+"</end>");
+				writer.println("<center>"+ae.center+"</center>");
+				for (int i = 0; i<ae.article.size(); i++)
+				{
+					writer.print(ae.article.elementAt(i).time.substring(0,10)+" ");
+					writer.println(ae.article.elementAt(i).title);
+				}
+				writer.println("</event>");
+				aem.addSummaryToSubtopic(ae);
+			}
 			activeEvent.remove(0);
 		}
+	}
+	
+	public void finalOutput(Vector<ActiveEvent> activeEvent)
+	{
+		for (int j = 0; j<activeEvent.size(); j++)
+		{
+			if (activeEvent.elementAt(j).article.size() >= Effective)
+			{
+				ActiveEvent ae = activeEvent.elementAt(j);
+				writer.println("<event>");
+				writer.println("<id>"+ae.id+"</id>");
+				writer.println("<start>"+ae.start+"</start>");
+				writer.println("<end>"+ae.end+"</end>");
+				writer.println("<center>"+ae.center+"</center>");
+				for (int i = 0; i<ae.article.size(); i++)
+				{
+					writer.print(ae.article.elementAt(i).time.substring(0,10)+" ");
+					writer.println(ae.article.elementAt(i).title);
+				}
+				writer.println("</event>");
+				aem.addSummaryToSubtopic(ae);
+			}
+		}
+		writer.close();
+	}
+	
+	@Override
+	public double similarity(ArticleExtend a, ArticleExtend b) { // if b == null, use bgtf;
+		// TODO Auto-generated method stub
+		double ret = 0;
+		double da = 0.0;
+		double db = 0.0;
+		int mergeSize = 0;
+		HashMap<String, Double> temp = new HashMap<String, Double>();
+		for (String term : a.tf.keySet())
+		{
+			//double tempa = a.tf.get(term) * Math.log((double)docTotalNum/((double)df.get(term)+1));
+			double tempa = 1;
+			da += tempa*tempa;
+			temp.put(term, tempa);
+			mergeSize++;
+		}
+		for (String term : b.tf.keySet())
+		{
+			//double tempb = btf.get(term) * Math.log((double)docTotalNum/((double)df.get(term)+1));
+			double tempb = 1;
+			db += tempb*tempb;
+			if (temp.containsKey(term))
+			{
+				ret += temp.get(term).doubleValue() * tempb;
+			}
+			else
+			{
+				mergeSize++;
+			}
+		}
+		//ret /= Math.sqrt(da*db);
+		ret /= mergeSize;
+		return ret;
 	}
 
 }

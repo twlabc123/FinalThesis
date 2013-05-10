@@ -76,8 +76,8 @@ public class StopWordFilter {
 	
 	public boolean isStopWord(String term)
 	{
-		boolean ret = stopWord.contains(term) || term.endsWith("/w") || term.length() == 0 || (term.endsWith("/m") && term.length() == 3);
-		ret = ret || term.endsWith("/p") || term.endsWith("/q") || term.endsWith("/a") || term.endsWith("/c") || term.endsWith("/d");
+		boolean ret = stopWord.contains(term) || term.endsWith("/w") || term.length() == 0 || term.endsWith("/m");
+		ret = ret || term.endsWith("/p") || term.endsWith("/q") || term.endsWith("/c") || term.endsWith("/d");
 		ret = ret || term.endsWith("/r") || term.endsWith("/t") || term.endsWith("/k") || term.endsWith("/y");
 		ret = ret || (term.endsWith("/nx") && term.length() == 4) || term.endsWith("/f") || term.endsWith("/nz");
 		ret = ret || term.endsWith("/b") || term.endsWith("/i");

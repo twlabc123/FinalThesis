@@ -2,33 +2,44 @@ package System;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.util.Vector;
 
-import Structure.Article;
 import Structure.ArticleExtend;
+import TopicThreading.MultiView;
 import TopicThreading.TfisfTime;
 import EventCluster.EventClusterTFIDF;
 
 public class TopLevel {
 	
 	EventClusterTFIDF ec;
-	TfisfTime sa;
+	//TfisfTime sa;
+	MultiView sa;
 	ActiveEventModule aem;
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		try
+		{
+			TopLevel tl = new TopLevel();
+			tl.run("data/final/news.txt");
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 		
 	}
 	
-	TopLevel()
+	TopLevel() throws Exception
 	{
 		aem = new ActiveEventModule();
-		sa = new TfisfTime(aem);
-		ec = new EventClusterTFIDF();
+		sa = new MultiView(aem, "data/final/online_st.txt");
+		ec = new EventClusterTFIDF(aem, "data/final/online_lc.txt");
+		aem.sa = sa;
+		aem.ec = ec;
 	}
 	
 	public void run(String input)
@@ -58,12 +69,20 @@ public class TopLevel {
 						ec.processBatch(batch, aem.activeEvent);
 						sa.processBatch(aem.activeEvent);
 						batch.clear();
+						//if (count > 3000) break;
 						batch.add(a);
 					}
 				}
 				count++;
-				if (count % 1000 == 0) System.out.println(count);
+				if (count % 100 == 0) System.out.println(count);
 			}
+			if (!batch.isEmpty())
+			{
+				ec.processBatch(batch, aem.activeEvent);
+				sa.processBatch(aem.activeEvent);
+			}
+			ec.finalOutput(aem.activeEvent);
+			sa.finalOutput();
 		}
 		catch (Exception e)
 		{

@@ -3,9 +3,11 @@ package Structure;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Vector;
+
+import DataPrepare.StopWordFilter;
 
 public class Event {
 	
@@ -81,7 +83,7 @@ public class Event {
 		return ret;
 	}
 	
-	public void addArticle(ArticleExtend a) throws ParseException
+	public void addArticle(ArticleExtend a, StopWordFilter swf) throws ParseException
 	{
 		article.add(a);
 		if (article.size() == 1)
@@ -98,6 +100,40 @@ public class Event {
 			temp += Article.getDate(article.elementAt(i).time).getTime()/3600/1000;
 		}
 		center = temp/article.size();
+		String[] ss = a.content.split(" ");
+		HashSet<String> temp2 = new HashSet<String>();
+		for (int k = 0; k<ss.length; k++)
+		{
+			String term = ss[k];
+			if (swf.isStopWord(term)) continue;
+			term = term.substring(0,term.lastIndexOf('/'));
+			if (tf.containsKey(term))
+			{
+				Integer tempI = tf.get(term);
+				tf.remove(term);
+				tf.put(term, tempI+1);
+			}
+			else
+			{
+				tf.put(term, 1);
+			}
+			
+			if (!temp2.contains(term))
+			{
+				if (df.containsKey(term))
+				{
+					Integer tempI = df.get(term);
+					df.remove(term);
+					df.put(term, tempI+1);
+				}
+				else
+				{
+					df.put(term, 1);
+				}
+				temp2.add(term);
+			}
+		}
+		
 		hasNewDoc = true;
 	}
 	

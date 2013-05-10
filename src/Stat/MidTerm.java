@@ -73,7 +73,7 @@ public class MidTerm {
 						line = reader.readLine();
 					}
 					line = reader.readLine();
-					st.eventNum = Integer.parseInt(line.split(" ")[0]);
+					//st.eventId = new Integer.parseInt(line.split(" ")[0]);
 					st.docNum = Integer.parseInt(line.split(" ")[1]);
 					st.start = line.split(" ")[2];
 					st.end = line.split(" ")[3];

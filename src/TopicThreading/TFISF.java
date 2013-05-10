@@ -1,5 +1,7 @@
 package TopicThreading;
 
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,7 +9,6 @@ import java.util.Vector;
 
 import DataPrepare.StopWordFilter;
 import Structure.ActiveEvent;
-import Structure.ArticleExtend;
 import Structure.Subtopic;
 import System.ActiveEventModule;
 
@@ -21,9 +22,9 @@ public class TFISF {
 	public PrintWriter writer;
 	public Vector<Integer> docNums;//just for screen output
 	public Vector<Integer> eventNums;//just for screen output
-	public ActiveEventModule activeEventModule;
+	public ActiveEventModule aem;
 	
-	public double InitClusterThreshold = 0.05;
+	public double InitClusterThreshold = 0.1;
 	public double ThreadingThreshold = InitClusterThreshold;
 	public int SummaryTitleNum = 3;
 	int Effective = 5;
@@ -47,10 +48,10 @@ public class TFISF {
 		swf.load("data/stopwords.txt");
 		docNums = new Vector<Integer>();
 		eventNums = new Vector<Integer>();
-		activeEventModule = null;
+		aem = null;
 	}
 	
-	TFISF(ActiveEventModule a)
+	TFISF(ActiveEventModule a, String output) throws Exception
 	{
 		subtopic = new Vector<Subtopic>();
 		sf = new HashMap<String, Integer>();
@@ -60,306 +61,24 @@ public class TFISF {
 		swf.load("data/stopwords.txt");
 		docNums = new Vector<Integer>();
 		eventNums = new Vector<Integer>();
-		activeEventModule = a;
+		aem = a;
+		FileOutputStream stream = new FileOutputStream(output);
+		OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
+		writer = new PrintWriter(sw);
 	}
-	
-	/*public void test(String input, String output)
-	{
-		try
-		{
-			int count = 0;
-			FileOutputStream stream = new FileOutputStream(output);
-			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
-			writer = new PrintWriter(sw);
-			FileInputStream istream = new FileInputStream(input);
-			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
-			BufferedReader reader = new BufferedReader(sr);
-			Event e;
-			Vector<Event> initData = new Vector<Event>();
-			while ((e = Event.readEvent(reader)) != null)
-			{
-				initData.add(e);
-				count++;
-				if (count >= 20) break;
-			}
-			init(initData);
-			System.out.println("Threading");
-			Threading(reader);
-			System.out.println("Threading finished");
-			for (int j = 0; j<subtopic.size(); j++)
-			{
-				Subtopic st = subtopic.elementAt(j);
-				if (st.docNum >= 20) bigStNum++;
-				if (st.docNum > Effective)
-				st.printSubtopic(writer, this);
-				System.out.println(st.docNum);
-			}
-			writer.println("Total subtopics : "+stNum);
-			writer.println("Big subtopics : "+bigStNum);
-			int biggest = -1;
-			for (int i = 0; i<docNums.size(); i++)
-			{
-				System.out.println(eventNums.elementAt(i) + " " + docNums.elementAt(i));
-				if (docNums.elementAt(i) > biggest) biggest = docNums.elementAt(i);
-			}
-			System.out.println("Biggest cluster : " + biggest);
-			System.out.println("finished");
-			reader.close();
-			writer.close();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	public void init(Vector<Event> event) throws Exception
-	{
-		for (int i = 0; i<event.size(); i++)
-		{
-			Subtopic st = new Subtopic();
-			stNum++;
-			Event e = event.elementAt(i);
-			st.start = e.start;
-			st.end = e.end;
-			st.center = e.center;
-			st.eventNum = 1;
-			HashSet<String> temp = new HashSet<String>();
-			for (int j = 0; j<e.article.size(); j++)
-			{
-				ArticleExtend a = e.article.elementAt(j);
-				st.docNum++;
-				if (st.summary.length() != 0) st.summary += "\n";
-				st.summary += a.time.substring(0,10) + " " + a.title;
-				String[] ss = a.content.split(" ");
-				HashSet<String> temp2 = new HashSet<String>();
-				for (int k = 0; k<ss.length; k++)
-				{
-					String term = ss[k];
-					if (swf.isStopWord(term)) continue;
-					
-					if (st.tf.containsKey(term))
-					{
-						Integer tempI = st.tf.get(term);
-						st.tf.remove(term);
-						st.tf.put(term, tempI+1);
-					}
-					else
-					{
-						st.tf.put(term, 1);
-					}
-					
-					if (!temp.contains(term))
-					{	
-						if (sf.containsKey(term))
-						{
-							Integer tempI = sf.get(term);
-							sf.remove(term);
-							sf.put(term, tempI+1);
-						}
-						else
-						{
-							sf.put(term, 1);
-						}
-						temp.add(term);
-					}
-					
-					if (!temp2.contains(term))
-					{
-						if (st.df.containsKey(term))
-						{
-							Integer tempI = st.df.get(term);
-							st.df.remove(term);
-							st.df.put(term, tempI+1);
-						}
-						else
-						{
-							st.df.put(term, 1);
-						}
-						temp2.add(term);
-					}
-					
-				}
-			}
-			subtopic.add(st);
-		}
-		initCluster();
-	}
-	
-	public void initCluster() throws Exception
-	{
-		int i = 1;
-		while (i < subtopic.size())
-		{
-			double sim = 0;
-			int mergeTo = -1;
-			for (int j = 0; j<i; j++)
-			{
-				double tempsim = similarity(subtopic.elementAt(i), subtopic.elementAt(j));
-				if (tempsim > InitClusterThreshold && tempsim > sim)
-				{
-					mergeTo = j;
-					sim = tempsim;
-				}
-			}
-			
-			if (mergeTo != -1)
-			{
-				merge(subtopic.elementAt(mergeTo), subtopic.elementAt(i));
-				subtopic.remove(i);
-				i--;
-			}
-			i++;
-		}
-	}
-	
-	public void Threading(BufferedReader reader)
-	{
-		try
-		{
-			int count = 0;
-			Event e;
-			while ((e = Event.readEvent(reader)) != null )
-			{
-				addEvent(e);
-				count++;
-				if (count % 100 == 0) System.out.println(count);
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	public void addEvent(Event e) throws Exception
-	{
-		Subtopic st = new Subtopic();
-		stNum++;
-		st.start = e.start;
-		st.end = e.end;
-		st.center = e.center;
-		st.eventNum = 1;
-		HashSet<String> temp = new HashSet<String>();
-		for (int j = 0; j<e.article.size(); j++)
-		{
-			
-			ArticleExtend a = e.article.elementAt(j);
-			st.docNum++;
-			if (st.summary.length() != 0) st.summary += "\n";
-			st.summary += a.time.substring(0,10) + " " + a.title;
-			String[] ss = a.content.split(" ");
-			HashSet<String> temp2 = new HashSet<String>();
-			for (int k = 0; k<ss.length; k++)
-			{
-				String term = ss[k];
-				if (swf.isStopWord(term)) continue;
-				
-				if (st.tf.containsKey(term))
-				{
-					Integer tempI = st.tf.get(term);
-					st.tf.remove(term);
-					st.tf.put(term, tempI+1);
-				}
-				else
-				{
-					st.tf.put(term, 1);
-				}
-				
-				if (!temp.contains(term))
-				{						
-					if (sf.containsKey(term))
-					{
-						Integer tempI = sf.get(term);
-						sf.remove(term);
-						sf.put(term, tempI+1);
-					}
-					else
-					{
-						sf.put(term, 1);
-					}
-					temp.add(term);
-				}
-				
-				if (!temp2.contains(term))
-				{
-					if (st.df.containsKey(term))
-					{
-						Integer tempI = st.df.get(term);
-						st.df.remove(term);
-						st.df.put(term, tempI+1);
-					}
-					else
-					{
-						st.df.put(term, 1);
-					}
-					temp2.add(term);
-				}
-				
-			}
-		}
-		
-		updateModel(st);
-	}
-	
-	public void merge(Subtopic a, Subtopic b) throws Exception // merge b into a, but not responsible to delete/remove b. User should delete/remove b in calling function
-	{
-		for (String term : b.tf.keySet())
-		{
-			if (sf.containsKey(term))
-			{
-				if (a.tf.containsKey(term))
-				{
-					Integer temp = sf.get(term);
-					sf.remove(term);
-					sf.put(term, temp-1);
-				}
-			}
-			
-			if (a.tf.containsKey(term))
-			{
-				Integer temp = a.tf.get(term);
-				a.tf.remove(term);
-				a.tf.put(term, temp+b.tf.get(term));
-			}
-			else
-			{
-				a.tf.put(term, b.tf.get(term));
-			}
-			
-			if (a.df.containsKey(term))
-			{
-				Integer temp = a.df.get(term);
-				a.df.remove(term);
-				a.df.put(term, temp+b.df.get(term));
-			}
-			else
-			{
-				a.df.put(term, b.df.get(term));
-			}
-		}
-		
-		a.eventId.addAll(b.eventId);
-		
-		
-		if (a.start.compareTo(b.start) > 0) a.start = b.start;
-		if (a.end.compareTo(b.end) < 0) a.end = b.end;
-		a.center = (a.center*a.docNum + b.center*b.docNum)/(a.docNum + b.docNum);
-		a.docNum += b.docNum;
-		a.eventNum += b.eventNum;
-		a.summary += "\n"+b.summary;
-		stNum--;
-	}
-	*/
 	
 	public void processBatch(Vector<ActiveEvent> activeEvent)
 	{
 		try
 		{
+			//aem.removeChangedEventFromSubtopic();
 			for (int i = 0; i<activeEvent.size(); i++)
 			{
 				ActiveEvent ae = activeEvent.elementAt(i);
-				if (ae.hasNewDoc) addEvent(ae);
+				if (ae.hasNewDoc && ae.article.size() >= Effective)
+				{
+					addEvent(ae);
+				}
 			}
 		}
 		catch (Exception e)
@@ -367,93 +86,45 @@ public class TFISF {
 			e.printStackTrace();
 		}
 	}
-
+	
 	void addEvent(ActiveEvent e) throws Exception
 	{
-		Subtopic st = new Subtopic(e);
-		stNum++;
-		HashSet<String> temp = new HashSet<String>();
-		for (int j = 0; j<e.article.size(); j++)
+		for (String term : e.tf.keySet())
 		{
-			ArticleExtend a = e.article.elementAt(j);
-			if (st.summary.length() != 0) st.summary += "\n";
-			st.summary += a.time.substring(0,10) + " " + a.title;
-			String[] ss = a.content.split(" ");
-			HashSet<String> temp2 = new HashSet<String>();
-			for (int k = 0; k<ss.length; k++)
+			if (sf.containsKey(term))
 			{
-				String term = ss[k];
-				if (swf.isStopWord(term)) continue;
-				
-				if (st.tf.containsKey(term))
-				{
-					Integer tempI = st.tf.get(term);
-					st.tf.remove(term);
-					st.tf.put(term, tempI+1);
-				}
-				else
-				{
-					st.tf.put(term, 1);
-				}
-				
-				if (!temp.contains(term))
-				{						
-					if (sf.containsKey(term))
-					{
-						Integer tempI = sf.get(term);
-						sf.remove(term);
-						sf.put(term, tempI+1);
-					}
-					else
-					{
-						sf.put(term, 1);
-					}
-					temp.add(term);
-				}
-				
-				if (!temp2.contains(term))
-				{
-					if (st.df.containsKey(term))
-					{
-						Integer tempI = st.df.get(term);
-						st.df.remove(term);
-						st.df.put(term, tempI+1);
-					}
-					else
-					{
-						st.df.put(term, 1);
-					}
-					temp2.add(term);
-				}
-				
+				Integer temp = sf.get(term);
+				sf.remove(term);
+				sf.put(term, temp+1);
+			}
+			else
+			{
+				sf.put(term, 1);
 			}
 		}
-		updateModel(st);
-	}
-	
-	void updateModel(Subtopic st) throws Exception
-	{
-		int mergeTo = computeSim(st);
-		subtopic.add(st);
-		for (int i = 0; i<st.eventId.size(); i++)
-		{
-			activeEventModule.linkEventToSubtopic(st.eventId.elementAt(i), subtopic.size()-1);
-		}
+		stNum++;
+		int mergeTo = computeSim(e);
 		if (mergeTo != -1)
 		{
-			merge(mergeTo, subtopic.size()-1);
+			merge(subtopic.elementAt(mergeTo), e);
+		}
+		else
+		{
+			Subtopic st = new Subtopic(e);
+			subtopic.add(st);
+			aem.linkEventToSubtopic(e, st);
 		}
 		int i = 0;
 		while (i < subtopic.size())
 		{
 			if (!subtopic.elementAt(i).active)
 			{
-				if (subtopic.elementAt(i).docNum > Effective)
+				if (subtopic.elementAt(i).docNum >= Effective)
 				{
 					subtopic.elementAt(i).printSubtopic(writer, this);
 					bigStNum++;
 				}
-				activeEventModule.removeSubtopic(i);
+				aem.removeSubtopic(subtopic.elementAt(i));
 				subtopic.remove(i);
 				i--;
 			}
@@ -461,14 +132,14 @@ public class TFISF {
 		}
 	}
 	
-	int computeSim(Subtopic st) throws Exception
+	int computeSim(ActiveEvent e) throws Exception
 	{
 		double sim = 0;
 		int mergeTo = -1;
 		for (int i = 0; i<subtopic.size(); i++)
 		{
 			if (!subtopic.elementAt(i).active) continue;
-			double tempsim = similarity(subtopic.elementAt(i), st);
+			double tempsim = similarity(subtopic.elementAt(i), e);
 			if (tempsim > ThreadingThreshold && tempsim > sim)
 			{
 				mergeTo = i;
@@ -478,13 +149,11 @@ public class TFISF {
 		return mergeTo;
 	}
 	
-	
-	
-	void merge(int mergeTo, int mergeIndex) throws Exception
+	void merge(Subtopic a, ActiveEvent e) throws Exception
 	{
-		Subtopic a = subtopic.elementAt(mergeTo);
-		Subtopic b = subtopic.elementAt(mergeIndex);
-		for (String term : b.tf.keySet())
+		a.addEvent(e);
+		aem.linkEventToSubtopic(e, a);
+		for (String term : e.tf.keySet())
 		{
 			if (sf.containsKey(term))
 			{
@@ -492,54 +161,14 @@ public class TFISF {
 				{
 					Integer temp = sf.get(term);
 					sf.remove(term);
-					sf.put(term, temp-1);
+					if (temp - 1 > 0)	sf.put(term, temp-1);
 				}
 			}
-			
-			if (a.tf.containsKey(term))
-			{
-				Integer temp = a.tf.get(term);
-				a.tf.remove(term);
-				a.tf.put(term, temp+b.tf.get(term));
-			}
-			else
-			{
-				a.tf.put(term, b.tf.get(term));
-			}
-			
-			if (a.df.containsKey(term))
-			{
-				Integer temp = a.df.get(term);
-				a.df.remove(term);
-				a.df.put(term, temp+b.df.get(term));
-			}
-			else
-			{
-				a.df.put(term, b.df.get(term));
-			}
 		}
-		for (int i = 0; i<b.eventId.size(); i++)
-		{
-			activeEventModule.delinkEventToSubtopic(b.eventId.elementAt(i), mergeIndex);
-			activeEventModule.linkEventToSubtopic(b.eventId.elementAt(i), mergeTo);
-		}
-		a.eventId.addAll(b.eventId);
-		
-		if (a.start.compareTo(b.start) > 0) a.start = b.start;
-		if (a.end.compareTo(b.end) < 0) a.end = b.end;
-		a.center = (a.center*a.docNum + b.center*b.docNum)/(a.docNum + b.docNum);
-		a.docNum += b.docNum;
-		a.eventNum += b.eventNum;
-		a.summary += "\n"+b.summary;
 		stNum--;
-		
-		activeEventModule.removeSubtopic(mergeIndex);
-		subtopic.remove(mergeIndex);
-		
-		
 	}
 	
-	public double similarity(Subtopic a, Subtopic b) throws Exception {// a should be the former subtopic and b should be the newer one.
+	public double similarity(Subtopic a, ActiveEvent b) throws Exception {// a should be the former subtopic and b should be the newer one.
 		// TODO Auto-generated method stub
 		double ret = 0;
 		double da = 0.0;
@@ -566,7 +195,6 @@ public class TFISF {
 		ret /= Math.sqrt(da*db);
 		return ret;
 	}
-	
 	
 	public String extractSubtopicSummary(Subtopic st)
 	{
@@ -656,5 +284,26 @@ public class TFISF {
 		return temp >= 0.5;
 	}
 	
+	public void finalOutput()
+	{
+		for (int i = 0; i<subtopic.size(); i++)
+		{
+			if (subtopic.elementAt(i).docNum > Effective)
+			{
+				subtopic.elementAt(i).printSubtopic(writer, this);
+				bigStNum++;
+			}
+		}
+		writer.close();
+	}
+	
+	public Subtopic getSubtopicById(int id)
+	{
+		for (int i = 0; i<subtopic.size(); i++)
+		{
+			if (subtopic.elementAt(i).id == id) return subtopic.elementAt(i);
+		}
+		return null;
+	}
 
 }

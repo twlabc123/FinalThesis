@@ -5,13 +5,15 @@ import java.util.Vector;
 import EventCluster.EventClusterTFIDF;
 import Structure.ActiveEvent;
 import Structure.Subtopic;
+import TopicThreading.MultiView;
 import TopicThreading.TfisfTime;
 
 public class ActiveEventModule {
 
 	Vector<ActiveEvent> activeEvent;
 	EventClusterTFIDF ec;
-	TfisfTime sa;
+	//TfisfTime sa;
+	MultiView sa;
 	
 	/**
 	 * @param args
@@ -26,140 +28,124 @@ public class ActiveEventModule {
 		activeEvent = new Vector<ActiveEvent>(); 
 	}
 	
-	public void removeChangedEventFromSubtopic(Vector<Subtopic> subtopic)
+	public ActiveEvent getEventById(int id)
+	{
+		for (int i = 0; i<activeEvent.size(); i++)
+		{
+			if (activeEvent.elementAt(i).id == id)
+			{
+				return activeEvent.elementAt(i);
+			}
+		}
+		return null;
+	}
+	
+	public void addSummaryToSubtopic(ActiveEvent ae)
+	{
+		for (int j = 0; j<ae.stId.size(); j++)
+		{
+			int id = ae.stId.elementAt(j);
+			Subtopic st = sa.getSubtopicById(id);
+			for (int k = 0; k<ae.article.size(); k++)
+			{
+				if (st.summary.length() != 0) st.summary += "\n";
+				st.summary += ae.article.elementAt(k).time.substring(0,10);
+				st.summary += " ";
+				st.summary += ae.article.elementAt(k).title;
+			}
+		}
+	}
+	
+	public void removeChangedEventFromSubtopic(ActiveEvent ae) throws Exception
+	{
+		for (int j = 0; j<ae.stId.size(); j++)
+		{
+			int id = ae.stId.elementAt(j);
+			Subtopic st = sa.getSubtopicById(id);
+			st.removeEvent(ae, this);
+		}
+		ae.stId.clear();
+		int i = 0;
+		while(i<sa.subtopic.size())
+		{
+			if (sa.subtopic.elementAt(i).eventId.size() <= 0)
+			{
+				removeSubtopic(sa.subtopic.elementAt(i));
+				sa.subtopic.remove(i);
+				i--;
+			}
+			i++;
+		}
+	}
+	
+	public void removeChangedEventFromSubtopic() throws Exception
 	{
 		for (int i = 0; i<activeEvent.size(); i++)
 		{
 			ActiveEvent ae = activeEvent.elementAt(i);
 			if (ae.hasNewDoc)
 			{
-				for (int j = 0; j<ae.stIndex.size(); j++)
+				for (int j = 0; j<ae.stId.size(); j++)
 				{
-					int index = ae.stIndex.elementAt(j);
-					Subtopic st = sa.subtopic.elementAt(index);
-					for (int k = st.eventId.size(); k>=0; k--)
-					{
-						if (st.eventId.elementAt(k) == ae.id)
-						{
-							for (String term : ae.tf.keySet())
-							{
-								Integer temp = st.tf.get(term);
-								st.tf.remove(term);
-								temp -= ae.tf.get(term);
-								if (temp > 0) st.tf.put(term, temp);
-							}
-							for (String term : ae.df.keySet())
-							{
-								Integer temp = st.df.get(term);
-								st.df.remove(term);
-								temp -= ae.df.get(term);
-								if (temp > 0) st.df.put(term, temp);
-							}
-							st.eventId.remove(k);
-							break;
-						}
-					}
+					int id = ae.stId.elementAt(j);
+					Subtopic st = sa.getSubtopicById(id);
+					st.removeEvent(ae, this);
 				}
-				ae.stIndex.clear();
+				ae.stId.clear();
 			}
+		}
+		int i = 0;
+		while(i<sa.subtopic.size())
+		{
+			if (sa.subtopic.elementAt(i).eventId.size() <= 0)
+			{
+				removeSubtopic(sa.subtopic.elementAt(i));
+				sa.subtopic.remove(i);
+				i--;
+			}
+			i++;
 		}
 	}
 	
-	public void linkEventToSubtopic(int eventId, int subtopicIndex) throws Exception
+	public void linkEventToSubtopic(ActiveEvent ae, Subtopic st) throws Exception
 	{
-		int a = 0;
-		int b = activeEvent.size();
-		int mid;
-		while (a < b)
-		{
-			mid = (a+b)/2;
-			int temp = activeEvent.elementAt(mid).id;
-			if (temp == eventId)
-			{
-				a = b = mid;
-			}
-			else if (temp > eventId)
-			{
-				b = mid - 1;
-			}
-			else
-			{
-				a = mid + 1;
-			}
-		}
-		
-		if (a > b)
-		{
-			throw new Exception("Can't find eventId "+ eventId + " !");
-		}
-		else
-		{
-			activeEvent.elementAt(a).stIndex.add(subtopicIndex);
-		}
+		ae.stId.add(st.id);
 	}
 	
-	public void delinkEventToSubtopic(int eventId, int subtopicIndex) throws Exception
+	public void delinkEventToSubtopic(int eventId, Subtopic st) throws Exception
 	{
-		int a = 0;
-		int b = activeEvent.size();
-		int mid;
-		while (a < b)
+		ActiveEvent ae = getEventById(eventId);
+		int i = 0;
+		while (i<ae.stId.size())
 		{
-			mid = (a+b)/2;
-			int temp = activeEvent.elementAt(mid).id;
-			if (temp == eventId)
+			if (ae.stId.elementAt(i) == st.id)
 			{
-				a = b = mid;
+				ae.stId.remove(i);
+				i--;
 			}
-			else if (temp > eventId)
-			{
-				b = mid - 1;
-			}
-			else
-			{
-				a = mid + 1;
-			}
-		}
-		
-		if (a > b)
-		{
-			throw new Exception("Can't find eventId "+ eventId + " !");
-		}
-		else
-		{
-			ActiveEvent ae = activeEvent.elementAt(a);
-			for (int i = 0; i<ae.stIndex.size(); i++)
-			{
-				if (ae.stIndex.elementAt(i) == subtopicIndex)
-				{
-					ae.stIndex.remove(i);
-					break;
-				}
-			}
+			i++;
 		}
 	}
 	
-	public void removeSubtopic(int stIndex)
+	public void removeSubtopic(Subtopic st)
 	{
 		for (int i = 0; i<activeEvent.size(); i++)
 		{
 			ActiveEvent ae = activeEvent.elementAt(i);
-			for (int j = 0; j<ae.stIndex.size(); j++)
+			for (int j = 0; j<ae.stId.size(); j++)
 			{
-				if (ae.stIndex.elementAt(j) > stIndex)
-				{
-					ae.stIndex.set(j, ae.stIndex.elementAt(j)-1);
-				}
-				else if (ae.stIndex.elementAt(j) == stIndex)
+				if (ae.stId.elementAt(j) == st.id)
 				//If the events always become inactive later than subtopics, then
 				//no currently active events can affect the subtopic that is being deleted,
 				//so this situation should not happen theoretically.
 				{
-					ae.stIndex.remove(j);
+					ae.stId.remove(j);
 					//if this situation indeed happens, we simply delete the subtopic ref from the event...
 				}
 			}
 		}
 	}
+	
+	
 
 }
