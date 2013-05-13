@@ -13,7 +13,7 @@ public class Merge {
 	
 	public static void main(String args[])
 	{
-		Merge.Merge2File("data/news_1.txt", "data/news_2.txt", "data/news.txt");
+		Merge.Merge2File("data/news_1.txt", "data/news_2.txt", "data/news_lite.txt");
 	}
 	
 	static void Merge2File(String input1, String input2, String output)
@@ -29,24 +29,28 @@ public class Merge {
 			String line;
 			while ((line = reader.readLine()) != null)
 			{
-				writer.println("<doc>");
-				String title = reader.readLine().substring(6);
-				
+				String title = reader.readLine().substring(6);	
 				String url = reader.readLine().substring(4);
 				String source = reader.readLine().substring(7);
 				String time = reader.readLine().substring(5);
 				String content = reader.readLine().substring(5);
+				String type = reader.readLine().substring(14);
 				reader.readLine();
-				reader.readLine();
-				title = title.replaceAll(" ", "");
-				writer.println("<title>"+title+"</title>");
-				content = content.replaceAll(" ", "");
-				writer.println("<content>"+content+"</content>");
-				writer.println("<url>"+url+"</url>");
-				writer.println("<time>"+Merge.dateFormat(time)+"</time>");
-				writer.println("<source>"+source+"</source>");
-				writer.println("</doc>");
-				//break;
+				if (type.equals("news") && !source.contains("娱乐"))
+				{
+					writer.println("<doc>");
+					title = title.replaceAll(" ", "");
+					title = title.replaceAll("　", "");
+					writer.println("<title>"+title+"</title>");
+					content = content.replaceAll(" ", "");
+					content = content.replaceAll("　", "");
+					writer.println("<content>"+content+"</content>");
+					writer.println("<url>"+url+"</url>");
+					writer.println("<time>"+Merge.dateFormat(time)+"</time>");
+					writer.println("<source>"+source+"</source>");
+					writer.println("</doc>");
+					//break;
+				}
 			}
 			
 			reader.close();
@@ -57,7 +61,11 @@ public class Merge {
 			while ((line = reader.readLine()) != null)
 			{
 				String title = reader.readLine();
+				title = title.replaceAll(" ", "");
+				title = title.replaceAll("　", "");
 				String content = reader.readLine();
+				content = content.replaceAll(" ", "");
+				content = content.replaceAll("　", "");
 				String type = reader.readLine();
 				String url = reader.readLine();
 				String time = reader.readLine();

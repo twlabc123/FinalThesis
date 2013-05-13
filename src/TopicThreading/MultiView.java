@@ -10,8 +10,9 @@ import System.ActiveEventModule;
 
 public class MultiView extends TFISF {
 
-	double Alpha = -0.01; // time fix with e^(-alpha*interval)
-	int SubtopicKeyword = 50;
+	double Alpha = -0.005; // time fix with e^(-alpha*interval)
+	int SubtopicKeyword = 30;
+	double EntityBonus = 5;
 	/**
 	 * @param args
 	 */
@@ -42,29 +43,48 @@ public class MultiView extends TFISF {
 		for (String term : a.tf.keySet())
 		{
 			double isf;
-			if (stNum == 1 || !sf.containsKey(term)) isf = 1;
+			if (stNum < 2 || !sf.containsKey(term)) isf = 1;
 			else isf = (Math.log((double)stNum/((double)sf.get(term))) / Math.log(stNum));
 			double tempa = a.tf.get(term) * isf;
-			pq.add(new TermScore(term, tempa));
+			if (term.endsWith("/nr")
+					|| term.endsWith("/ns")
+					|| term.endsWith("/me")
+					|| term.endsWith("/nz"))
+			{
+				tempa *= EntityBonus;
+			}
+			//if (tempa >= 1.00001)
+			{
+				pq.add(new TermScore(term, tempa));
+			}
 		}
 		HashMap<String, Double> temp = new HashMap<String, Double>();
-		for (int i = 0; i<this.SubtopicKeyword; i++)
+		double total = 0;
+		//System.out.println("=============subtopic=============");
+		for (int i = 0; i<this.SubtopicKeyword && !pq.isEmpty(); i++)
 		{
 			TermScore ts = pq.poll();
 			//System.out.println(ts.term + " " + ts.score);
 			temp.put(ts.term, ts.score);
-			if (pq.isEmpty()) break;
+			total += ts.score;
 		}
 		
+		double local = 0;
 		for (String term : temp.keySet())
 		{
-			if (e.tf.containsKey(term)) ret += 1;
+			if (e.tf.containsKey(term))
+			{
+				ret += 1;
+				local += temp.get(term);
+			}
 		}
 		
-		//ret /= Math.sqrt(da*db);
-		ret /= temp.size();
+		//ret /= temp.size();
+		ret = local / total;
+		if (a.docNum <= 1) ret *= 2;
+		//System.out.println(temp.size() + " " + ret);
 		
-		// Different from TFISF
+		// Time Fix
 		if (interval > 0)
 		{
 			ret *= fix;

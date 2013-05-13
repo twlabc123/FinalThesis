@@ -44,6 +44,7 @@ public class ArticleExtend extends Article {
 		line = reader.readLine();
 		ret.time = line.substring(6, line.length()-7);
 		line = reader.readLine();
+		//System.out.println(line);
 		ret.source = line.substring(8, line.length()-9);
 		reader.readLine();
 		return ret;

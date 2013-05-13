@@ -45,9 +45,9 @@ public class StopWordFilter {
 			reader.readLine();
 			while ((line = reader.readLine()) != null)
 			{
-				stopWord.add(line.split(",")[0]);
+				stopWord.add(line);
 				count++;
-				if (count >= SIZE) break;
+				//if (count >= SIZE) break;
 			}
 			System.out.println("Load Stopwords finished");
 		}

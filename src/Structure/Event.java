@@ -106,7 +106,7 @@ public class Event {
 		{
 			String term = ss[k];
 			if (swf.isStopWord(term)) continue;
-			term = term.substring(0,term.lastIndexOf('/'));
+			//term = term.substring(0,term.lastIndexOf('/'));
 			if (tf.containsKey(term))
 			{
 				Integer tempI = tf.get(term);

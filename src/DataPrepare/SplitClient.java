@@ -123,7 +123,7 @@ public class SplitClient {
 	          
 	          bfWriter.write(ret2);
 	          bfWriter.newLine();
-	          if (c++ % 2000 == 0)
+	          if (c++ % 100 == 0)
 	             System.out.println("i= " + c + "\t " + ret2);
 	        }
 	 
@@ -140,8 +140,8 @@ public class SplitClient {
      String input = "钓鱼岛";
      // String ret = SplitClient.splitString(input, CONFIG._serverIP,
      // CONFIG._splitPort );
-     String ret = SplitClient.splitString(input, SplitClient.SERVERIP, SplitClient.SERVERPORT);
-     System.out.println(ret);
+     //String ret = SplitClient.splitString(input, SplitClient.SERVERIP, SplitClient.SERVERPORT);
+     //System.out.println(ret);
      SplitClient.splitSogouFile(args[0], args[1], SplitClient.SERVERIP, SplitClient.SERVERPORT);
    }
 }

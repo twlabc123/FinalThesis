@@ -24,7 +24,7 @@ public class TopLevel {
 		try
 		{
 			TopLevel tl = new TopLevel();
-			tl.run("data/final/news.txt");
+			tl.run("data/final/news_lite_2.txt");
 		}
 		catch (Exception e)
 		{
@@ -69,7 +69,7 @@ public class TopLevel {
 						ec.processBatch(batch, aem.activeEvent);
 						sa.processBatch(aem.activeEvent);
 						batch.clear();
-						//if (count > 3000) break;
+						//if (count > 1000) break;
 						batch.add(a);
 					}
 				}

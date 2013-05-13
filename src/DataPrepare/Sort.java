@@ -19,7 +19,7 @@ public class Sort {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Sort.sort("data/news_split.txt", "data/news_split_sort.txt");
+		Sort.sort("data/final/news_lite.txt", "data/final/news_lite_sorted.txt");
 	}
 	
 	public static void sort(String input, String output)
@@ -42,6 +42,7 @@ public class Sort {
 			for (int i = 0; i < array.size(); i++)
 			{
 				a = (Article)array.get(i);
+				if (a.time.substring(0,4).compareTo("2012") >= 0)
 				a.printArticle(writer);
 			}
 			reader.close();

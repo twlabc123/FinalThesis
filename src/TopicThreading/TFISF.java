@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Vector;
 
 import DataPrepare.StopWordFilter;
+import EventCluster.EventClusterTFIDF;
 import Structure.ActiveEvent;
 import Structure.Subtopic;
 import System.ActiveEventModule;
@@ -27,7 +28,8 @@ public class TFISF {
 	public double InitClusterThreshold = 0.1;
 	public double ThreadingThreshold = InitClusterThreshold;
 	public int SummaryTitleNum = 3;
-	int Effective = 5;
+	
+	int Effective = 20;
 	
 	/**
 	 * @param args
@@ -75,7 +77,7 @@ public class TFISF {
 			for (int i = 0; i<activeEvent.size(); i++)
 			{
 				ActiveEvent ae = activeEvent.elementAt(i);
-				if (ae.hasNewDoc && ae.article.size() >= Effective)
+				if (ae.hasNewDoc && ae.article.size() >= EventClusterTFIDF.Effective)
 				{
 					addEvent(ae);
 				}
@@ -103,17 +105,8 @@ public class TFISF {
 			}
 		}
 		stNum++;
-		int mergeTo = computeSim(e);
-		if (mergeTo != -1)
-		{
-			merge(subtopic.elementAt(mergeTo), e);
-		}
-		else
-		{
-			Subtopic st = new Subtopic(e);
-			subtopic.add(st);
-			aem.linkEventToSubtopic(e, st);
-		}
+		computeSim(e);
+		
 		int i = 0;
 		while (i < subtopic.size())
 		{
@@ -132,21 +125,40 @@ public class TFISF {
 		}
 	}
 	
-	int computeSim(ActiveEvent e) throws Exception
+	void computeSim(ActiveEvent e) throws Exception
 	{
+		Vector<Integer> mergeIndex = new Vector<Integer>();
 		double sim = 0;
 		int mergeTo = -1;
 		for (int i = 0; i<subtopic.size(); i++)
 		{
 			if (!subtopic.elementAt(i).active) continue;
 			double tempsim = similarity(subtopic.elementAt(i), e);
-			if (tempsim > ThreadingThreshold && tempsim > sim)
+			if (tempsim > ThreadingThreshold)
 			{
-				mergeTo = i;
-				sim = tempsim;
+				mergeIndex.add(i);
+				if (tempsim > sim)
+				{
+					mergeTo = i;
+					sim = tempsim;
+				}
 			}
 		}
-		return mergeTo;
+		if (mergeTo == -1)
+		{
+			Subtopic st = new Subtopic(e);
+			subtopic.add(st);
+			aem.linkEventToSubtopic(e, st);
+		}
+		else
+		{
+			/*for (int i = 0; i<mergeIndex.size(); i++)
+			{
+				merge(subtopic.elementAt(mergeIndex.elementAt(i)), e);
+			}*/
+			merge(subtopic.elementAt(mergeTo), e);
+		}
+		
 	}
 	
 	void merge(Subtopic a, ActiveEvent e) throws Exception
@@ -205,16 +217,19 @@ public class TFISF {
 		for (String s : ss)
 		{
 			s = s.substring(11);
+			int length = 0;
 			double temp = 0;
 			String[] terms = s.split(" ");
 			for (String term : terms)
 			{
+				if (!sf.containsKey(term)) continue;
+				length++;
 				if (st.tf.containsKey(term))
 				{
 					temp += st.tf.get(term) * Math.log((double)stNum/((double)sf.get(term)));
 				}
 			}
-			if (terms.length != 0) temp /= terms.length;
+			if (length != 0) temp /= length;
 			int i = 0;
 			for (i = 0; i<summary.size(); i++)
 			{

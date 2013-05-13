@@ -26,7 +26,7 @@ public class EventClusterTFIDF extends EventCluster {
 	//Vector<Vector<Article>> outputData;// only for off-line implementation
 	
 	double Threshold = 0.80;//cluster threshold
-	int Effective = 5;//Event with more than Effective articles is effective
+	public static int Effective = 1;//Event with more than Effective articles is effective
 	int Delta = 3;//span of the time window
 	
 	/**
@@ -290,7 +290,6 @@ public class EventClusterTFIDF extends EventCluster {
 				writer.println("<id>"+ae.id+"</id>");
 				writer.println("<start>"+ae.start+"</start>");
 				writer.println("<end>"+ae.end+"</end>");
-				writer.println("<center>"+ae.center+"</center>");
 				for (int i = 0; i<ae.article.size(); i++)
 				{
 					writer.print(ae.article.elementAt(i).time.substring(0,10)+" ");

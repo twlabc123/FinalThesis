@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Vector;
 
+import Structure.Article;
 import Structure.ArticleExtend;
 import Structure.Event;
 import Structure.Subtopic;
@@ -31,6 +32,7 @@ public class Ngram {
 	
 	
 	public HashMap<String, String> dic;
+	Vector<String> keyTerm;
 	
 	/**
 	 * @param args
@@ -39,10 +41,11 @@ public class Ngram {
 		// TODO Auto-generated method stub
 		Ngram b = new Ngram();
 		int n = 2;
-		//b.extract("data/final/news_lc_merge.txt", "data/ngram/"+n+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt", n);
-		b.loadDic("data/ngram/2gramdic_0.9_0.8_1.2_2.txt");
+		//b.extract("data/final/news_lite_sorted.txt", "data/ngram/"+n+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt", n);
+		b.loadDic("data/ngram/"+n+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt");
+		b.loadSyn("profile/synonym.txt");
 		//b.merge("data/final/news_lc_merge.txt", "data/final/news_lc_merge_2.txt");
-		b.mergeArticle("data/final/news_merge.txt", "data/final/news_merge_2.txt");
+		b.mergeArticle("data/final/news.txt", "data/final/news_final.txt");
 		
 	}
 	
@@ -51,8 +54,9 @@ public class Ngram {
 		tf = new HashMap<String, Integer>();
 		ntf = new HashMap<String, Integer>();
 		dic = new HashMap<String, String>();
+		keyTerm = new Vector<String>();
 		swf = new StopWordFilter();
-		swf.load("data/sogou/tf.csv");
+		swf.load("data/stopwords.txt");
 	}
 	
 	public void extract(String input, String output, int N)
@@ -66,51 +70,46 @@ public class Ngram {
 			FileInputStream istream = new FileInputStream(input);
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			BufferedReader reader = new BufferedReader(sr);
-			Event e;
-			Vector<Event> initData = new Vector<Event>();
-			while ((e = Event.readEvent(reader)) != null)
+			ArticleExtend a;
+			while ((a = ArticleExtend.readArticle(reader)) != null)
 			{
-				for (int i = 0; i<e.article.size(); i++)
+				String[] ss = a.content.split(" ");
+				for (int j = 0; j<ss.length; j++)
 				{
-					ArticleExtend a = e.article.elementAt(i);
-					String[] ss = a.content.split(" ");
-					for (int j = 0; j<ss.length; j++)
+					String term = ss[j];
+					if (swf.notWord(term)) continue;
+					if (tf.containsKey(term))
 					{
-						String term = ss[j];
-						if (swf.notWord(term)) continue;
-						if (tf.containsKey(term))
+						Integer temp = tf.get(term);
+						tf.remove(term);
+						tf.put(term, temp+1);
+					}
+					else
+					{
+						tf.put(term, 1);
+					}
+					
+					
+					if (j+N-1 < ss.length)
+					{
+						String nterm = term;
+						boolean b = true;
+						for (int k = j+1; k<=j+N-1; k++)
 						{
-							Integer temp = tf.get(term);
-							tf.remove(term);
-							tf.put(term, temp+1);
+							nterm += " " + ss[k];
+							if (swf.notWord(ss[k])) b = false;
 						}
-						else
+						if (b)
 						{
-							tf.put(term, 1);
-						}
-						
-						
-						if (j+N-1 < ss.length)
-						{
-							String nterm = term;
-							boolean b = true;
-							for (int k = j+1; k<=j+N-1; k++)
+							if (ntf.containsKey(nterm))
 							{
-								nterm += " " + ss[k];
-								if (swf.notWord(ss[k])) b = false;
+								Integer temp = ntf.get(nterm);
+								ntf.remove(nterm);
+								ntf.put(nterm, temp+1);
 							}
-							if (b)
+							else
 							{
-								if (ntf.containsKey(nterm))
-								{
-									Integer temp = ntf.get(nterm);
-									ntf.remove(nterm);
-									ntf.put(nterm, temp+1);
-								}
-								else
-								{
-									ntf.put(nterm, 1);
-								}
+								ntf.put(nterm, 1);
 							}
 						}
 					}
@@ -198,6 +197,30 @@ public class Ngram {
 				String key = line.substring(0, line.indexOf("@$@"));
 				String value = key.split(" ")[0].substring(0, key.split(" ")[0].indexOf("/")) + key.split(" ")[1].substring(0, key.split(" ")[1].indexOf("/"))+"/me";
 				//System.out.println(key+" --> "+value);
+				keyTerm.add(key);
+				dic.put(key, value);
+			}
+			reader.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void loadSyn(String input)
+	{
+		try
+		{
+			FileInputStream istream = new FileInputStream(input);
+			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
+			BufferedReader reader = new BufferedReader(sr);
+			String line;
+			while ((line = reader.readLine()) != null)
+			{
+				String key = line.split(" ")[0];
+				String value = line.split(" ")[1];
+				keyTerm.add(key);
 				dic.put(key, value);
 			}
 			reader.close();
@@ -259,7 +282,9 @@ public class Ngram {
 			int count = 0;
 			while ((a = ArticleExtend.readArticle(reader)) != null)
 			{
-				for (String term : dic.keySet())
+				if (a.url.startsWith("http%3A%2F%2Fent.qq.com")) continue;
+				if (a.source.contains("娱乐")) continue;
+				for (String term : keyTerm)
 				{
 					a.title = a.title.replaceAll(term, dic.get(term));
 					a.content = a.content.replaceAll(term, dic.get(term));
