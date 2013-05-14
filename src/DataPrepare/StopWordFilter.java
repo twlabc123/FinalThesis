@@ -60,6 +60,7 @@ public class StopWordFilter {
 	public boolean notWord(String term)
 	{
 		boolean ret = term.endsWith("/w") || term.length() <= 2;
+		ret = ret || stopWord.contains(term);
 		return ret;
 	}
 	
@@ -79,7 +80,7 @@ public class StopWordFilter {
 		boolean ret = stopWord.contains(term) || term.endsWith("/w") || term.length() == 0 || term.endsWith("/m");
 		ret = ret || term.endsWith("/p") || term.endsWith("/q") || term.endsWith("/c") || term.endsWith("/d");
 		ret = ret || term.endsWith("/r") || term.endsWith("/t") || term.endsWith("/k") || term.endsWith("/y");
-		ret = ret || (term.endsWith("/nx") && term.length() == 4) || term.endsWith("/f") || term.endsWith("/nz");
+		ret = ret || (term.endsWith("/nx") && term.length() == 4) || term.endsWith("/nz");
 		ret = ret || term.endsWith("/b") || term.endsWith("/i");
 		return ret;
 		//Filt single numbers. They should be

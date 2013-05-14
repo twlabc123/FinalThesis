@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Vector;
 
 import Structure.Article;
@@ -16,19 +17,22 @@ import Structure.Subtopic;
 
 public class Ngram {
 	
-	public class neighbor
+	class Pair
 	{
-		public HashMap<String, Integer> left;
-		public HashMap<String, Integer> right;
+		int f;
+		int t;
+		
+		Pair(int f, int t)
+		{
+			this.f = f;
+			this.t = t;
+		}
 	}
 	
-	public HashMap<String, Integer> tf;
-	public HashMap<String, Integer> ntf;
+	public HashMap<String, Pair> ntf;
 	public StopWordFilter swf;
-	double Threshold = 0.9;
-	double AnyThreshold = 0.8;
-	double EachThreshold = 1.2;
-	int freThreshold = 0;
+	double Threshold = 0.90;
+	int freThreshold = 300;
 	
 	
 	public HashMap<String, String> dic;
@@ -41,18 +45,17 @@ public class Ngram {
 		// TODO Auto-generated method stub
 		Ngram b = new Ngram();
 		int n = 2;
-		//b.extract("data/final/news_lite_sorted.txt", "data/ngram/"+n+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt", n);
-		b.loadDic("data/ngram/"+n+"gramdic_"+b.Threshold+"_"+b.AnyThreshold+"_"+b.EachThreshold+".txt");
-		b.loadSyn("profile/synonym.txt");
+		//b.extract(args[0], args[1], n);
+		b.loadDic("data/ngram/dic_1.txt");
+		//b.loadSyn("profile/synonym.txt");
 		//b.merge("data/final/news_lc_merge.txt", "data/final/news_lc_merge_2.txt");
-		b.mergeArticle("data/final/news.txt", "data/final/news_final.txt");
+		b.mergeArticle("data/news_split_sort_cut_filted.txt", "data/source/news_merge_1.txt");
 		
 	}
 	
 	Ngram()
 	{
-		tf = new HashMap<String, Integer>();
-		ntf = new HashMap<String, Integer>();
+		ntf = new HashMap<String, Pair>();
 		dic = new HashMap<String, String>();
 		keyTerm = new Vector<String>();
 		swf = new StopWordFilter();
@@ -74,21 +77,14 @@ public class Ngram {
 			while ((a = ArticleExtend.readArticle(reader)) != null)
 			{
 				String[] ss = a.content.split(" ");
+				HashSet<String> terms = new HashSet<String>();
+				HashSet<String> nterms = new HashSet<String>();
 				for (int j = 0; j<ss.length; j++)
 				{
 					String term = ss[j];
 					if (swf.notWord(term)) continue;
-					if (tf.containsKey(term))
-					{
-						Integer temp = tf.get(term);
-						tf.remove(term);
-						tf.put(term, temp+1);
-					}
-					else
-					{
-						tf.put(term, 1);
-					}
 					
+					terms.add(term);
 					
 					if (j+N-1 < ss.length)
 					{
@@ -99,56 +95,73 @@ public class Ngram {
 							nterm += " " + ss[k];
 							if (swf.notWord(ss[k])) b = false;
 						}
-						if (b)
+						if (b && !nterms.contains(nterm))
 						{
 							if (ntf.containsKey(nterm))
 							{
-								Integer temp = ntf.get(nterm);
+								int f = ntf.get(nterm).f;
+								int t = ntf.get(nterm).t;
 								ntf.remove(nterm);
-								ntf.put(nterm, temp+1);
+								ntf.put(nterm, new Pair(f+1, t));
 							}
 							else
 							{
-								ntf.put(nterm, 1);
+								ntf.put(nterm, new Pair(1, 0));
 							}
+							nterms.add(nterm);
 						}
 					}
 				}
 				
+				nterms = new HashSet<String>();
+				for (String nterm : ntf.keySet())
+				{
+					String term1 = nterm.split(" ")[0];
+					String term2 = nterm.split(" ")[1];
+					if (terms.contains(term1) && terms.contains(term2))
+					{
+						nterms.add(nterm);
+					}
+				}
+				
+				for (String nterm : nterms)
+				{
+					int f = ntf.get(nterm).f;
+					int t = ntf.get(nterm).t;
+					ntf.remove(nterm);
+					ntf.put(nterm, new Pair(f, t+1));
+				}
+				
 				count++;
+				nterms = new HashSet<String>();
 				if (count % 100 == 0) System.out.println(count);
+				if (count % 500 == 0)
+				{
+					for (String nterm : ntf.keySet())
+					{
+						double r = (double)ntf.get(nterm).f/(double)ntf.get(nterm).t;
+						if (ntf.get(nterm).f < 20 || r < Threshold/2)
+						{
+							nterms.add(nterm);
+						}
+					}
+				}
+				
+				for (String nterm : nterms)
+				{
+					ntf.remove(nterm);
+				}
 			}
 			System.out.println("Outputing");
 			Vector<String> nterms = new Vector<String>();
 			for (String term : ntf.keySet())
 			{
-				if (ntf.get(term) < freThreshold) continue;
-				//System.out.println(term);
-				String[] t = term.split(" ");
-				Vector<Double> r = new Vector<Double>();
-				double rate = -0.1;;
-				boolean any = true;
-				boolean each = true;
-				for (int i = 0; i<N; i++)
-				{
-					double temp = (double)ntf.get(term)/(double)tf.get(t[i]);
-					r.add(temp);
-					if (rate < temp) rate = temp;
-					if (temp < AnyThreshold) any = false;
-					if (temp < EachThreshold) each = false;
-				}
 				java.text.DecimalFormat df=new java.text.DecimalFormat("#.###");
-				if ((any && rate > Threshold) || each)
+				//System.out.println(term);
+				double r = (double)ntf.get(term).f/(double)ntf.get(term).t;
+				if (r >= Threshold && ntf.get(term).f >= freThreshold)
 				{
-					String nterm = "";
-					String out = "";
-					for (int i = 0; i<r.size(); i++)
-					{
-						out += " "+t[i]+":"+df.format(r.elementAt(i));
-						nterm += t[i].substring(0, t[i].indexOf("/"));
-					}
-					nterms.add(term+"@$@"+out);
-					//writer.println(nterm+out);
+					nterms.add(term+"@$@"+r+"@$@"+ntf.get(term).f+"/"+ntf.get(term).t);
 				}
 			}
 			for (int i = 0; i<nterms.size(); i++)
@@ -157,7 +170,8 @@ public class Ngram {
 				for (int j = i+1; j<nterms.size(); j++)
 				{
 					String termJ = nterms.elementAt(j);
-					if (ntf.get(termI.substring(0, termI.indexOf("@$@"))) < ntf.get(termJ.substring(0, termJ.indexOf("@$@"))))
+					if (Double.parseDouble(termI.substring(termI.indexOf("@$@")+3,termI.lastIndexOf("@$@")))
+							< Double.parseDouble(termJ.substring(termJ.indexOf("@$@")+3,termJ.lastIndexOf("@$@"))))
 					{
 						nterms.set(i, termJ);
 						nterms.set(j, termI);
@@ -170,7 +184,7 @@ public class Ngram {
 				if (!(termI.substring(0, termI.indexOf("@$@")).split(" ")[0].endsWith("/nr") &&
 						termI.substring(0, termI.indexOf("@$@")).split(" ")[1].endsWith("/nr")))
 				{
-					writer.println(termI+"---"+ntf.get(termI.substring(0, termI.indexOf("@$@"))));
+					writer.println(termI);
 				}
 			}
 			
@@ -195,6 +209,7 @@ public class Ngram {
 			while ((line = reader.readLine()) != null)
 			{
 				String key = line.substring(0, line.indexOf("@$@"));
+				System.out.println(key);
 				String value = key.split(" ")[0].substring(0, key.split(" ")[0].indexOf("/")) + key.split(" ")[1].substring(0, key.split(" ")[1].indexOf("/"))+"/me";
 				//System.out.println(key+" --> "+value);
 				keyTerm.add(key);
@@ -282,8 +297,10 @@ public class Ngram {
 			int count = 0;
 			while ((a = ArticleExtend.readArticle(reader)) != null)
 			{
-				if (a.url.startsWith("http%3A%2F%2Fent.qq.com")) continue;
+				if (a.url.startsWith("http%3A%2F%2Fent")) continue;
+				if (a.url.startsWith("http://ent")) continue;
 				if (a.source.contains("娱乐")) continue;
+				if (a.source.length() > 20) a.source = "";
 				for (String term : keyTerm)
 				{
 					a.title = a.title.replaceAll(term, dic.get(term));

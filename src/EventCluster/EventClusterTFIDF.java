@@ -26,7 +26,7 @@ public class EventClusterTFIDF extends EventCluster {
 	//Vector<Vector<Article>> outputData;// only for off-line implementation
 	
 	double Threshold = 0.80;//cluster threshold
-	public static int Effective = 1;//Event with more than Effective articles is effective
+	public static int Effective = 5;//Event with more than Effective articles is effective
 	int Delta = 3;//span of the time window
 	
 	/**

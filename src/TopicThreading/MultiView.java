@@ -10,7 +10,7 @@ import System.ActiveEventModule;
 
 public class MultiView extends TFISF {
 
-	double Alpha = -0.005; // time fix with e^(-alpha*interval)
+	double Alpha = -0.01; // time fix with e^(-alpha*interval)
 	int SubtopicKeyword = 30;
 	double EntityBonus = 5;
 	/**
@@ -31,9 +31,8 @@ public class MultiView extends TFISF {
 		double ret = 0;
 		
 		// Different from TFISF
-		long interval = e.center - a.center;
+		long interval = (e.center - a.center) / 24;
 		if (interval < 0) interval = 0;
-		//if (interval > 5) interval -= 5;
 		double fix = Math.exp(interval*Alpha);
 		if (fix < ThreadingThreshold*ThreadingThreshold) a.active = false;
 		if (fix <= ThreadingThreshold) return 0;
@@ -49,11 +48,12 @@ public class MultiView extends TFISF {
 			if (term.endsWith("/nr")
 					|| term.endsWith("/ns")
 					|| term.endsWith("/me")
-					|| term.endsWith("/nz"))
+					|| term.endsWith("/nz")
+					|| term.endsWith("/nt"))
 			{
 				tempa *= EntityBonus;
 			}
-			//if (tempa >= 1.00001)
+			if (tempa >= 1.00001)
 			{
 				pq.add(new TermScore(term, tempa));
 			}

@@ -24,7 +24,7 @@ public class TopLevel {
 		try
 		{
 			TopLevel tl = new TopLevel();
-			tl.run("data/final/news_lite_2.txt");
+			tl.run("data/final/news_final.txt");
 		}
 		catch (Exception e)
 		{

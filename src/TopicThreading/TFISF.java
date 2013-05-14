@@ -25,10 +25,8 @@ public class TFISF {
 	public Vector<Integer> eventNums;//just for screen output
 	public ActiveEventModule aem;
 	
-	public double InitClusterThreshold = 0.1;
-	public double ThreadingThreshold = InitClusterThreshold;
-	public int SummaryTitleNum = 3;
-	
+	double ThreadingThreshold = 0.4;
+	int SummaryTitleNum = 3;
 	int Effective = 20;
 	
 	/**
@@ -226,7 +224,8 @@ public class TFISF {
 				length++;
 				if (st.tf.containsKey(term))
 				{
-					temp += st.tf.get(term) * Math.log((double)stNum/((double)sf.get(term)));
+					double isf = (Math.log((double)stNum/((double)sf.get(term))) / Math.log(stNum));
+					temp += st.tf.get(term) * isf;
 				}
 			}
 			if (length != 0) temp /= length;
