@@ -24,7 +24,7 @@ public class TopLevel {
 		try
 		{
 			TopLevel tl = new TopLevel();
-			tl.run("data/final/news_final.txt");
+			tl.run("data/source/news_merge_2.txt");
 		}
 		catch (Exception e)
 		{

@@ -47,10 +47,11 @@ public class Ngram {
 		int n = 2;
 		//b.extract(args[0], args[1], n);
 		b.loadDic("data/ngram/dic_1.txt");
-		//b.loadSyn("profile/synonym.txt");
-		//b.merge("data/final/news_lc_merge.txt", "data/final/news_lc_merge_2.txt");
 		b.mergeArticle("data/news_split_sort_cut_filted.txt", "data/source/news_merge_1.txt");
-		
+		b = new Ngram();
+		b.loadDic("data/ngram/dic_2.txt");
+		b.loadSyn("profile/synonym.txt");
+		b.mergeArticle("data/source/news_merge_1.txt", "data/source/news_merge_2.txt");
 	}
 	
 	Ngram()

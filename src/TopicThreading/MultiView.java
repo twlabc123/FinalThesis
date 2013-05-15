@@ -12,7 +12,7 @@ public class MultiView extends TFISF {
 
 	double Alpha = -0.01; // time fix with e^(-alpha*interval)
 	int SubtopicKeyword = 30;
-	double EntityBonus = 5;
+	double EntityBonus = 2;
 	/**
 	 * @param args
 	 */
@@ -37,27 +37,7 @@ public class MultiView extends TFISF {
 		if (fix < ThreadingThreshold*ThreadingThreshold) a.active = false;
 		if (fix <= ThreadingThreshold) return 0;
 		
-		PriorityQueue<TermScore> pq = new PriorityQueue<TermScore>(this.SubtopicKeyword, TermScore.cp);
-		
-		for (String term : a.tf.keySet())
-		{
-			double isf;
-			if (stNum < 2 || !sf.containsKey(term)) isf = 1;
-			else isf = (Math.log((double)stNum/((double)sf.get(term))) / Math.log(stNum));
-			double tempa = a.tf.get(term) * isf;
-			if (term.endsWith("/nr")
-					|| term.endsWith("/ns")
-					|| term.endsWith("/me")
-					|| term.endsWith("/nz")
-					|| term.endsWith("/nt"))
-			{
-				tempa *= EntityBonus;
-			}
-			if (tempa >= 1.00001)
-			{
-				pq.add(new TermScore(term, tempa));
-			}
-		}
+		PriorityQueue<TermScore> pq = this.getKeyword(a);
 		HashMap<String, Double> temp = new HashMap<String, Double>();
 		double total = 0;
 		//System.out.println("=============subtopic=============");
@@ -81,7 +61,6 @@ public class MultiView extends TFISF {
 		
 		//ret /= temp.size();
 		ret = local / total;
-		if (a.docNum <= 1) ret *= 2;
 		//System.out.println(temp.size() + " " + ret);
 		
 		// Time Fix
@@ -91,6 +70,57 @@ public class MultiView extends TFISF {
 		}
 		
 		return ret;
+	}
+	
+	public String keyWords(Subtopic a) throws Exception
+	{
+		String ret = "";
+		
+		PriorityQueue<TermScore> pq = this.getKeyword(a);
+		HashMap<String, Double> temp = new HashMap<String, Double>();
+		double total = 0;
+		for (int i = 0; i<this.SubtopicKeyword && !pq.isEmpty(); i++)
+		{
+			TermScore ts = pq.poll();
+			if (ret.length() != 0) ret += " ";
+			ret += ts.term;
+		}
+		return ret;
+	}
+	
+	public PriorityQueue<TermScore> getKeyword(Subtopic a)
+	{
+		PriorityQueue<TermScore> pq = new PriorityQueue<TermScore>(this.SubtopicKeyword, TermScore.cp);
+		for (String term : a.tf.keySet())
+		{
+			double isf;
+			if (stNum < 2 || !sf.containsKey(term))
+			{
+				if (term.endsWith(term)) isf = 0.5;
+				else isf = 1;
+			}
+			else
+			{
+				int temp = sf.get(term);
+				if (temp == 1 && term.endsWith("/nr")) temp = stNum / 2;
+				isf = (Math.log((double)stNum/((double)temp)) / Math.log(stNum));
+			}
+			double tempa = a.tf.get(term) * isf;
+			if (term.endsWith("/ns")
+				|| term.endsWith("/nr")
+				|| term.endsWith("/me")
+				|| term.endsWith("/nz")
+				|| term.endsWith("/nt"))
+			{
+				tempa *= EntityBonus;
+			}
+			
+			if (tempa >= 1.00001)
+			{
+				pq.add(new TermScore(term, tempa));
+			}
+		}
+		return pq;
 	}
 
 }

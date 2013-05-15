@@ -25,9 +25,10 @@ public class TFISF {
 	public Vector<Integer> eventNums;//just for screen output
 	public ActiveEventModule aem;
 	
-	double ThreadingThreshold = 0.4;
-	int SummaryTitleNum = 3;
-	int Effective = 20;
+	double ThreadingThreshold = 0.35;
+	int SummaryTitleNum = 10;
+	int EffectiveDoc = 100;
+	int EffectiveEvent = 10;
 	
 	/**
 	 * @param args
@@ -110,7 +111,8 @@ public class TFISF {
 		{
 			if (!subtopic.elementAt(i).active)
 			{
-				if (subtopic.elementAt(i).docNum >= Effective)
+				if (subtopic.elementAt(i).docNum >= EffectiveDoc
+						|| subtopic.elementAt(i).event.size() >= EffectiveEvent)
 				{
 					subtopic.elementAt(i).printSubtopic(writer, this);
 					bigStNum++;
@@ -154,14 +156,14 @@ public class TFISF {
 			{
 				merge(subtopic.elementAt(mergeIndex.elementAt(i)), e);
 			}*/
-			merge(subtopic.elementAt(mergeTo), e);
+			merge(subtopic.elementAt(mergeTo), e, sim);
 		}
 		
 	}
 	
-	void merge(Subtopic a, ActiveEvent e) throws Exception
+	void merge(Subtopic a, ActiveEvent e, double sim) throws Exception
 	{
-		a.addEvent(e);
+		a.addEvent(e, sim);
 		aem.linkEventToSubtopic(e, a);
 		for (String term : e.tf.keySet())
 		{
@@ -214,6 +216,7 @@ public class TFISF {
 		Vector<Double> value = new Vector<Double>();
 		for (String s : ss)
 		{
+			if (s.startsWith("sim:")) continue;
 			s = s.substring(11);
 			int length = 0;
 			double temp = 0;
@@ -298,11 +301,12 @@ public class TFISF {
 		return temp >= 0.5;
 	}
 	
-	public void finalOutput()
+	public void finalOutput() throws Exception
 	{
 		for (int i = 0; i<subtopic.size(); i++)
 		{
-			if (subtopic.elementAt(i).docNum > Effective)
+			if (subtopic.elementAt(i).docNum > EffectiveDoc
+					|| subtopic.elementAt(i).event.size() >= EffectiveEvent)
 			{
 				subtopic.elementAt(i).printSubtopic(writer, this);
 				bigStNum++;

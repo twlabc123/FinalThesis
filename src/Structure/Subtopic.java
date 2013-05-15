@@ -7,16 +7,29 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import System.ActiveEventModule;
+import TopicThreading.MultiView;
 import TopicThreading.TFISF;
 
 public class Subtopic {
+	
+	public class EventEdge
+	{
+		public int id;
+		public double value;
+		
+		public EventEdge(int id, double value)
+		{
+			this.id = id;
+			this.value = value;
+		}
+	}
 	
 	
 	public static int ID = 0;
 	public int id;
 	public HashMap<String, Integer> tf;
 	public HashMap<String, Integer> df;
-	public Vector<Integer> eventId;
+	public Vector<EventEdge> event;
 	public String start;
 	public String end;
 	public long center;
@@ -32,8 +45,8 @@ public class Subtopic {
 		tf.putAll(e.tf);
 		df = new HashMap<String, Integer>();
 		df.putAll(e.df);
-		eventId = new Vector<Integer>();
-		eventId.add(e.id);
+		event = new Vector<EventEdge>();
+		event.add(new EventEdge(e.id, 1));
 		this.start = e.start;
 		this.end = e.end;
 		this.center = e.center;
@@ -48,8 +61,7 @@ public class Subtopic {
 		ID++;
 		tf = new HashMap<String, Integer>();
 		df = new HashMap<String, Integer>();
-		eventId = new Vector<Integer>();
-		eventId = new Vector<Integer>();
+		event = new Vector<EventEdge>();
 		start = "";
 		end = "";
 		docNum = 0;
@@ -57,13 +69,14 @@ public class Subtopic {
 		active = true;
 	}
 	
-	public void printSubtopic(PrintWriter writer, TFISF model)
+	public void printSubtopic(PrintWriter writer, TFISF model) throws Exception
 	{
 		writer.println("<subtopic>\n============");
-		writer.println(model.extractSubtopicSummary(this));
+		//writer.println(model.extractSubtopicSummary(this));
+		writer.println(((MultiView)model).keyWords(this));
 		writer.println("============");
 		//writer.println(id);
-		writer.println(eventId.size() + " " + docNum);
+		writer.println(event.size() + " " + docNum);
 		writer.println(start.substring(0,10) + " " + end.substring(0,10));
 		Date d = new Date();
 		d.setTime(center*3600*1000);
@@ -72,10 +85,10 @@ public class Subtopic {
 		writer.println(summary);
 		writer.println("</subtopic>");
 		model.docNums.add(docNum);
-		model.eventNums.add(eventId.size());
+		model.eventNums.add(event.size());
 	}
 	
-	public void addEvent(ActiveEvent e) throws Exception
+	public void addEvent(ActiveEvent e, double sim) throws Exception
 	{
 		Subtopic a = this;
 		for (String term : e.tf.keySet())
@@ -102,7 +115,7 @@ public class Subtopic {
 				a.df.put(term, e.df.get(term));
 			}
 		}
-		a.eventId.add(e.id);
+		a.event.add(new EventEdge(e.id, sim));
 		
 		if (a.start.compareTo(e.start) > 0) a.start = e.start;
 		if (a.end.compareTo(e.end) < 0) a.end = e.end;
@@ -112,9 +125,9 @@ public class Subtopic {
 	
 	public void removeEvent(ActiveEvent ae, ActiveEventModule aem)
 	{
-		for (int k = eventId.size()-1; k>=0; k--)
+		for (int k = event.size()-1; k>=0; k--)
 		{
-			if (eventId.elementAt(k) == ae.id)
+			if (event.elementAt(k).id == ae.id)
 			{
 				for (String term : ae.tf.keySet())
 				{
@@ -136,11 +149,11 @@ public class Subtopic {
 						if (temp > 0) df.put(term, temp);
 					}
 				}
-				eventId.remove(k);
+				event.remove(k);
 				break;
 			}
 		}
-		if (eventId.size() > 0)
+		if (event.size() > 0)
 		{
 			boolean resetStart = start.equals(ae.start);
 			if (resetStart) start = "5012-01-01";
@@ -151,9 +164,9 @@ public class Subtopic {
 			docNum -= ae.article.size();
 			temp /= docNum;
 			center = temp;
-			for (int i = 0; i<eventId.size(); i++)
+			for (int i = 0; i<event.size(); i++)
 			{
-				ActiveEvent tempae = aem.getEventById(eventId.elementAt(i));
+				ActiveEvent tempae = aem.getEventById(event.elementAt(i).id);
 				if (tempae == null) continue;
 				if (resetStart)
 				{

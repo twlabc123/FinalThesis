@@ -46,12 +46,20 @@ public class ActiveEventModule {
 		{
 			int id = ae.stId.elementAt(j);
 			Subtopic st = sa.getSubtopicById(id);
+			if (st.summary.length() > 0) st.summary += "\n";
 			for (int k = 0; k<ae.article.size(); k++)
 			{
-				if (st.summary.length() != 0) st.summary += "\n";
 				st.summary += ae.article.elementAt(k).time.substring(0,10);
 				st.summary += " ";
 				st.summary += ae.article.elementAt(k).title;
+				st.summary += "\n";
+			}
+			for (int i = 0; i<st.event.size(); i++)
+			{
+				if (st.event.elementAt(i).id == ae.id)
+				{
+					st.summary += "sim: "+st.event.elementAt(i).value;
+				}
 			}
 		}
 	}
@@ -68,7 +76,7 @@ public class ActiveEventModule {
 		int i = 0;
 		while(i<sa.subtopic.size())
 		{
-			if (sa.subtopic.elementAt(i).eventId.size() <= 0)
+			if (sa.subtopic.elementAt(i).event.size() <= 0)
 			{
 				removeSubtopic(sa.subtopic.elementAt(i));
 				sa.subtopic.remove(i);
@@ -97,7 +105,7 @@ public class ActiveEventModule {
 		int i = 0;
 		while(i<sa.subtopic.size())
 		{
-			if (sa.subtopic.elementAt(i).eventId.size() <= 0)
+			if (sa.subtopic.elementAt(i).event.size() <= 0)
 			{
 				removeSubtopic(sa.subtopic.elementAt(i));
 				sa.subtopic.remove(i);
