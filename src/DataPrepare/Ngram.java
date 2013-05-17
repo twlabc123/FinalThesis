@@ -10,10 +10,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
-import Structure.Article;
 import Structure.ArticleExtend;
 import Structure.Event;
-import Structure.Subtopic;
 
 public class Ngram {
 	
@@ -44,8 +42,7 @@ public class Ngram {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Ngram b = new Ngram();
-		int n = 2;
-		//b.extract(args[0], args[1], n);
+		//b.extract(args[0], args[1], 2);
 		b.loadDic("data/ngram/dic_1.txt");
 		b.mergeArticle("data/news_split_sort_cut_filted.txt", "data/source/news_merge_1.txt");
 		b = new Ngram();
@@ -157,7 +154,6 @@ public class Ngram {
 			Vector<String> nterms = new Vector<String>();
 			for (String term : ntf.keySet())
 			{
-				java.text.DecimalFormat df=new java.text.DecimalFormat("#.###");
 				//System.out.println(term);
 				double r = (double)ntf.get(term).f/(double)ntf.get(term).t;
 				if (r >= Threshold && ntf.get(term).f >= freThreshold)

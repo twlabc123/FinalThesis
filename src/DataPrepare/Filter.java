@@ -176,6 +176,7 @@ public class Filter {
 				//break;
 			}
 			writer.close();
+			writer2.close();
 		}
 		catch (Exception e)
 		{

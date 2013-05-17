@@ -32,6 +32,7 @@ public class Event {
 		hasNewDoc = true;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public Event(Event e)
 	{
 		article = e.article;

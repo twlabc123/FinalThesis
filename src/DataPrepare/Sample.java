@@ -23,10 +23,9 @@ public class Sample {
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			PrintWriter writer = new PrintWriter(sw);
 			BufferedReader reader = new BufferedReader(sr);
-			String line;
 			int RATE = 50;
 			int count = 0; 
-			while ((line = reader.readLine()) != null)
+			while ((reader.readLine()) != null)
 			{
 				String title = reader.readLine();
 				String content = reader.readLine();

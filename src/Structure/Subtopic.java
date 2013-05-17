@@ -1,8 +1,6 @@
 package Structure;
 
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -78,9 +76,9 @@ public class Subtopic {
 		//writer.println(id);
 		writer.println(event.size() + " " + docNum);
 		writer.println(start.substring(0,10) + " " + end.substring(0,10));
-		Date d = new Date();
-		d.setTime(center*3600*1000);
-		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+//		Date d = new Date();
+//		d.setTime(center*3600*1000);
+//		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		//writer.println(format.format(d));
 		writer.println(summary);
 		writer.println("</subtopic>");

@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Vector;
 
-import Structure.ArticleExtend;
 import Structure.Event;
 
 public class EventStat {

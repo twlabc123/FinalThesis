@@ -6,7 +6,6 @@ import EventCluster.EventClusterTFIDF;
 import Structure.ActiveEvent;
 import Structure.Subtopic;
 import TopicThreading.MultiView;
-import TopicThreading.TfisfTime;
 
 public class ActiveEventModule {
 

@@ -77,8 +77,6 @@ public class MultiView extends TFISF {
 		String ret = "";
 		
 		PriorityQueue<TermScore> pq = this.getKeyword(a);
-		HashMap<String, Double> temp = new HashMap<String, Double>();
-		double total = 0;
 		for (int i = 0; i<this.SubtopicKeyword && !pq.isEmpty(); i++)
 		{
 			TermScore ts = pq.poll();
@@ -102,8 +100,9 @@ public class MultiView extends TFISF {
 			else
 			{
 				int temp = sf.get(term);
-				if (temp == 1 && term.endsWith("/nr")) temp = stNum / 2;
+				double rate = (double)(a.df.get(term))/(double)(a.docNum);
 				isf = (Math.log((double)stNum/((double)temp)) / Math.log(stNum));
+				if (term.endsWith("/nr") && rate < 0.5) isf = 0;
 			}
 			double tempa = a.tf.get(term) * isf;
 			if (term.endsWith("/ns")

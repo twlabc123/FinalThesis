@@ -137,7 +137,6 @@ public class SplitClient {
  
    public static void main(String[] args) {
  
-     String input = "钓鱼岛";
      // String ret = SplitClient.splitString(input, CONFIG._serverIP,
      // CONFIG._splitPort );
      //String ret = SplitClient.splitString(input, SplitClient.SERVERIP, SplitClient.SERVERPORT);

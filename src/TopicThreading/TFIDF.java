@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Vector;
 
 import DataPrepare.StopWordFilter;

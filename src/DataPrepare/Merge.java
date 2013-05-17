@@ -6,8 +6,6 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class Merge {
 	
@@ -26,8 +24,7 @@ public class Merge {
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			PrintWriter writer = new PrintWriter(sw);
 			BufferedReader reader = new BufferedReader(sr);
-			String line;
-			while ((line = reader.readLine()) != null)
+			while ((reader.readLine()) != null)
 			{
 				String title = reader.readLine().substring(6);	
 				String url = reader.readLine().substring(4);
@@ -58,7 +55,7 @@ public class Merge {
 			sr = new InputStreamReader(istream, "utf-8");
 			reader = new BufferedReader(sr);
 			reader.readLine();
-			while ((line = reader.readLine()) != null)
+			while ((reader.readLine()) != null)
 			{
 				String title = reader.readLine();
 				title = title.replaceAll(" ", "");
@@ -81,6 +78,7 @@ public class Merge {
 				writer.println("</doc>");
 			}
 			writer.close();
+			reader.close();
 		} catch (Exception e)
 		{
 			e.printStackTrace();

@@ -7,7 +7,6 @@ import java.util.Vector;
 
 import Structure.ArticleExtend;
 import TopicThreading.MultiView;
-import TopicThreading.TfisfTime;
 import EventCluster.EventClusterTFIDF;
 
 public class TopLevel {

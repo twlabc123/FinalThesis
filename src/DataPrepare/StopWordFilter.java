@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Map;
 
 import Structure.Article;
-import Structure.ArticleExtend;
 
 public class StopWordFilter {
 
@@ -41,15 +40,13 @@ public class StopWordFilter {
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			BufferedReader reader = new BufferedReader(sr);
 			String line;
-			int count = 0;
 			reader.readLine();
 			while ((line = reader.readLine()) != null)
 			{
 				stopWord.add(line);
-				count++;
-				//if (count >= SIZE) break;
 			}
 			System.out.println("Load Stopwords finished");
+			reader.close();
 		}
 		catch (Exception e)
 		{

@@ -1,20 +1,10 @@
 package TopicThreading;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Vector;
 
 import DataPrepare.StopWordFilter;
-import Structure.ArticleExtend;
 import Structure.Burst;
-import Structure.Event;
 import Structure.Subtopic;
 
 public class BurstSim extends TFISF {
