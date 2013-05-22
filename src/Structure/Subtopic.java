@@ -1,27 +1,17 @@
 package Structure;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Vector;
 
 import System.ActiveEventModule;
+import System.ExtractSummary;
 import TopicThreading.MultiView;
 import TopicThreading.TFISF;
 
 public class Subtopic {
-	
-	public class EventEdge
-	{
-		public int id;
-		public double value;
-		
-		public EventEdge(int id, double value)
-		{
-			this.id = id;
-			this.value = value;
-		}
-	}
-	
 	
 	public static int ID = 0;
 	public int id;
@@ -30,6 +20,7 @@ public class Subtopic {
 	public Vector<EventEdge> event;
 	public String start;
 	public String end;
+	public String keyword;
 	public long center;
 	public int docNum;
 	public String summary;
@@ -67,23 +58,57 @@ public class Subtopic {
 		active = true;
 	}
 	
+	public static Subtopic readSubtopic(BufferedReader reader) throws IOException
+	{
+		Subtopic ret = new Subtopic();
+		String line = reader.readLine();
+		if (line == null) return null;
+		line = reader.readLine();
+		ret.id = Integer.parseInt(line.substring(4, line.length()-5));
+		line = reader.readLine();
+		ret.keyword = line.substring(10, line.length()-11);
+		line = reader.readLine();
+		int eventNum = Integer.parseInt(line.substring(10, line.length()-11));
+		for (int i = 0; i<eventNum; i++)
+		{
+			line = reader.readLine();
+			line = reader.readLine();
+			int id = Integer.parseInt(line.substring(4,line.length()-5));
+			line = reader.readLine();
+			double value = Double.parseDouble(line.substring(7,line.length()-8));
+			ret.event.add(new EventEdge(id, value));
+			line = reader.readLine();
+			if (ret.summary.length() != 0) ret.summary += "\n";
+			ret.summary += line.substring(9, line.length()-10);
+			line = reader.readLine();
+		}
+		line = reader.readLine();
+		return ret;
+	}
+	
 	public void printSubtopic(PrintWriter writer, TFISF model) throws Exception
 	{
-		writer.println("<subtopic>\n============");
-		//writer.println(model.extractSubtopicSummary(this));
-		writer.println(((MultiView)model).keyWords(this));
-		writer.println("============");
-		//writer.println(id);
-		writer.println(event.size() + " " + docNum);
-		writer.println(start.substring(0,10) + " " + end.substring(0,10));
-//		Date d = new Date();
-//		d.setTime(center*3600*1000);
-//		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-		//writer.println(format.format(d));
-		writer.println(summary);
+		writer.println("<subtopic>");
+		writer.println("<id>"+id+"</id>");
+		writer.println("<keywords>"+((MultiView)model).keyWords(this)+"</keywords>");
+		writer.println("<eventnum>"+event.size()+"</eventnum>");
+		String[] summaries = summary.split("\n");
+		for (int i = 0; i<event.size(); i++)
+		{
+			writer.println("<event>");
+			writer.println("<id>"+event.elementAt(i).id+"</id>");
+			writer.println("<value>"+event.elementAt(i).value+"</value>");
+			String sum = "";
+			for (String temp : summaries[i].split(" "))
+			{
+				sum += temp.substring(0, temp.lastIndexOf("/"));
+			}
+			writer.println("<summary>"+sum+"</summary>");
+			writer.println("</event>");
+		}
 		writer.println("</subtopic>");
-		model.docNums.add(docNum);
-		model.eventNums.add(event.size());
+		writer.flush();
+		
 	}
 	
 	public void addEvent(ActiveEvent e, double sim) throws Exception

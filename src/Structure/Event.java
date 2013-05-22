@@ -49,19 +49,17 @@ public class Event {
 		String line = reader.readLine();
 		if (line == null) return null;
 		Event ret = new Event();
+		line = reader.readLine();
+		ret.id = Integer.parseInt(line.substring(4, line.length()-5));
+		line = reader.readLine();
+		ret.start = line.substring(7, line.length()-8);
+		line = reader.readLine();
+		ret.end = line.substring(5, line.length()-6);
 		ArticleExtend a;
 		while ((a = ArticleExtend.readArticle(reader)) != null)
 		{
 			ret.article.add(a);
 		}
-		ret.start = ret.article.firstElement().time;
-		ret.end = ret.article.lastElement().time;
-		long temp = 0;
-		for (int i = 0; i<ret.article.size(); i++)
-		{
-			temp += Article.getDate(ret.article.elementAt(i).time).getTime()/3600/1000;
-		}
-		ret.center = temp/ret.article.size();
 		
 		return ret;
 	}
@@ -141,6 +139,9 @@ public class Event {
 	public void printEvent(PrintWriter writer) throws Exception
 	{
 		writer.println("<event>");
+		writer.println("<id>"+id+"</id>");
+		writer.println("<start>"+start+"</start>");
+		writer.println("<end>"+end+"</end>");
 		for (int i = 0; i<article.size(); i++)
 		{
 			article.elementAt(i).printArticle(writer);

@@ -85,6 +85,17 @@ public class StopWordFilter {
 		//sogou data. However, sogou uses SBC case.
 	}
 	
+	public boolean isSentenceEnd(String term)
+	{
+		boolean b = term.equals("。/w");
+		b = b || term.equals("！/w");
+		b = b || term.equals("？/w");
+		b = b || term.equals("./w");
+		b = b || term.equals("?/w");
+		b = b || term.equals("!/w");
+		return b;
+	}
+	
 	public void run(String input, String output)//generate tf table from diaoyudao news data
 	{
 		HashMap<String, Integer> tf = new HashMap<String, Integer>();
