@@ -8,7 +8,7 @@ import TopicThreading.TFISF;
 
 public class ExtractSummary {
 	
-	static double TitleBonus = 2;
+	static double TitleBonus = 1;
 
 	public static String ExtractEventSummary(Event e, TFISF sa)
 	{

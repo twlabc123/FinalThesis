@@ -90,7 +90,8 @@ public class Subtopic {
 	{
 		writer.println("<subtopic>");
 		writer.println("<id>"+id+"</id>");
-		writer.println("<keywords>"+((MultiView)model).keyWords(this)+"</keywords>");
+		if (model != null) writer.println("<keywords>"+((MultiView)model).keyWords(this)+"</keywords>");
+		else writer.println("<keywords>"+this.keyword+"</keywords>");
 		writer.println("<eventnum>"+event.size()+"</eventnum>");
 		String[] summaries = summary.split("\n");
 		for (int i = 0; i<event.size(); i++)
@@ -101,7 +102,14 @@ public class Subtopic {
 			String sum = "";
 			for (String temp : summaries[i].split(" "))
 			{
-				sum += temp.substring(0, temp.lastIndexOf("/"));
+				if (temp.contains("/"))
+				{
+					sum += temp.substring(0, temp.lastIndexOf("/"));
+				}
+				else
+				{
+					sum += temp;
+				}
 			}
 			writer.println("<summary>"+sum+"</summary>");
 			writer.println("</event>");

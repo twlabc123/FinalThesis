@@ -2,15 +2,23 @@ package System;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.PriorityQueue;
 import java.util.Vector;
 
 import DataPrepare.StopWordFilter;
 import Structure.Event;
+import Structure.EventEdge;
 import Structure.Subtopic;
+import Structure.TermScore;
 
 public class InteractDetection {
 	
@@ -54,7 +62,7 @@ public class InteractDetection {
 		try
 		{
 			InteractDetection inter = new InteractDetection("data/final/online_lc.txt", "data/final/online_st.txt", "");
-			inter.mergeEvent();
+			inter.mergeEvent("data/final/online_lc_merge.txt", "data/final/online_st_merge.txt");
 		}
 		catch (Exception e)
 		{
@@ -62,12 +70,35 @@ public class InteractDetection {
 		}
 	}
 	
-	public void mergeEvent()
+	public void mergeEvent(String eventOutput, String subtopicOutput) throws Exception
 	{
 		for (int i = 0; i<subtopic.size(); i++)
 		{
 			Subtopic st = subtopic.elementAt(i);
 			String[] summary = st.summary.split("\n");
+			st.summary = "";
+			for (int j = 0; j<st.event.size(); j++)
+			{
+				String s1 = event.get(st.event.elementAt(j).id).start;
+				for (int k = j+1; k<st.event.size(); k++)
+				{
+					String s2 = event.get(st.event.elementAt(k).id).start;
+					if (s1.compareTo(s2) > 0)
+					{
+						EventEdge temp = st.event.elementAt(j);
+						st.event.set(j, st.event.elementAt(k));
+						st.event.set(k, temp);
+						String tempS = summary[j];
+						summary[j] = summary[k];
+						summary[k] = tempS;
+					}
+				}
+				if (st.summary.length() != 0) st.summary += "\n";
+				st.summary += summary[j];
+			}
+			summary = st.summary.split("\n");
+			st.summary = summary[0];
+			Vector<Integer> del = new Vector<Integer>();
 			for (int j = 1; j<st.event.size(); j++)
 			{
 				Event e = event.get(st.event.elementAt(j).id);
@@ -103,13 +134,55 @@ public class InteractDetection {
 				double sim = (double)(count)/(double)(terms1.size()+terms2.size()-count);
 				if (sim > SameEvent)
 				{
-					System.out.println("==========");
-					System.out.println(e.id + " " + summary[j]);
-					System.out.println(last.id + " " + summary[j-1]);
-					
+					del.add(j);
+				}
+				else
+				{
+					if (st.summary.length() != 0) st.summary += "\n";
+					st.summary += summary[j];
 				}
 			}
+			
+			for (int j = del.size() - 1; j >= 0; j--)
+			{
+				Event e = event.get(st.event.elementAt(del.elementAt(j)).id);
+				Event last = event.get(st.event.elementAt(del.elementAt(j)-1).id);
+				last.article.addAll(e.article);
+				if (e.start.compareTo(last.start) < 0) last.start = e.start;
+				if (e.end.compareTo(last.end) > 0) last.end = e.end;
+				System.out.println(e.id + " " + last.id + " "+ summary[del.elementAt(j)]);
+				event.remove(st.event.elementAt(del.elementAt(j)).id);
+				st.event.remove(del.elementAt(j).intValue());
+			}
 		}
+		PriorityQueue<Event> pq = new PriorityQueue<Event>(event.size(), this.cp);
+		pq.addAll(event.values());
+		FileOutputStream stream = new FileOutputStream(eventOutput);
+		OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
+		writer = new PrintWriter(sw);
+		while(!pq.isEmpty())
+		{
+			Event e = pq.poll();
+			e.printEvent(writer);
+		}
+		writer.close();
+		stream = new FileOutputStream(subtopicOutput);
+		sw = new OutputStreamWriter(stream, "utf-8");
+		writer = new PrintWriter(sw);
+		for (Subtopic st : subtopic)
+		{
+			st.printSubtopic(writer, null);
+		}
+		writer.close();
 	}
+	
+	public static Comparator<Event> cp = new Comparator<Event>()
+	{
+        public int compare(Event o1, Event o2)
+        {
+            // TODO Auto-generated method stub  
+        	return o1.start.compareTo(o2.start);
+        }
+	};
 
 }
