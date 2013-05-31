@@ -142,7 +142,7 @@ public class Subtopic {
 				a.df.put(term, temp+e.df.get(term));
 			}
 			else
-			{
+			{ 
 				a.df.put(term, e.df.get(term));
 			}
 		}

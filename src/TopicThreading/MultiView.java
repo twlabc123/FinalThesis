@@ -10,9 +10,9 @@ import System.ActiveEventModule;
 
 public class MultiView extends TFISF {
 
-	double Alpha = -0.01; // time fix with e^(-alpha*interval)
-	int SubtopicKeyword = 30;
-	double EntityBonus = 2;
+	static double Alpha = -0.01; // time fix with e^(-alpha*interval)
+	public static int SubtopicKeyword = 30;
+	public static double EntityBonus = 2;
 	/**
 	 * @param args
 	 */
@@ -40,11 +40,9 @@ public class MultiView extends TFISF {
 		PriorityQueue<TermScore> pq = this.getKeyword(a);
 		HashMap<String, Double> temp = new HashMap<String, Double>();
 		double total = 0;
-		//System.out.println("=============subtopic=============");
 		for (int i = 0; i<this.SubtopicKeyword && !pq.isEmpty(); i++)
 		{
 			TermScore ts = pq.poll();
-			//System.out.println(ts.term + " " + ts.score);
 			temp.put(ts.term, ts.score);
 			total += ts.score;
 		}
@@ -61,7 +59,6 @@ public class MultiView extends TFISF {
 		
 		//ret /= temp.size();
 		ret = local / total;
-		//System.out.println(temp.size() + " " + ret);
 		
 		// Time Fix
 		if (interval > 0)
@@ -81,7 +78,7 @@ public class MultiView extends TFISF {
 		{
 			TermScore ts = pq.poll();
 			if (ret.length() != 0) ret += " ";
-			ret += ts.term;
+			ret += ts.term+" "+ts.score;
 		}
 		return ret;
 	}

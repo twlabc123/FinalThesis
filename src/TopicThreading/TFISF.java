@@ -25,10 +25,10 @@ public class TFISF {
 	public Vector<Integer> eventNums;//just for screen output
 	public ActiveEventModule aem;
 	
-	double ThreadingThreshold = 0.4;
-	int SummaryTitleNum = 10;
-	int EffectiveDoc = 100;
-	int EffectiveEvent = 10;
+	static double ThreadingThreshold = 0.4;
+	static int SummaryTitleNum = 10;
+	static int EffectiveDoc = 100;
+	static int EffectiveEvent = 10;
 	
 	/**
 	 * @param args
