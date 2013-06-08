@@ -7,6 +7,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
+
+/**
+ * The function of this class is only merging 2 batches of Diaoyu Island data into one file.<br>
+ * @author twl
+ *
+ */
 public class Merge {
 	
 	public static void main(String args[])
@@ -85,6 +91,11 @@ public class Merge {
 		}
 	}
 	
+	/**
+	 * translate digital month format to 3-char format
+	 * @param date 
+	 * @return
+	 */
 	static String dateFormat(String date)
 	{
 		String[] ss = date.split(" ");

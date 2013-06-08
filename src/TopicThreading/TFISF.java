@@ -13,20 +13,56 @@ import Structure.ActiveEvent;
 import Structure.Subtopic;
 import System.ActiveEventModule;
 
+/**
+ * The event clustering module base class.<br>
+ * Using tf-isf similary.
+ * @author twl
+ *
+ */
 public class TFISF {
 
+	/**
+	 * Subtopic set
+	 */
 	public Vector<Subtopic> subtopic;
+	/**
+	 * Term subtopic frequency table
+	 */
 	public HashMap<String, Integer> sf;
+	/**
+	 * The total number of subtopics
+	 */
 	public int stNum;
+	/**
+	 * The total number of big subtopics.<br>
+	 * Has been abandoned
+	 */
 	public int bigStNum;
+	/**
+	 * Stop word filter
+	 */
 	public StopWordFilter swf;
+	/**
+	 * Writer of the output file
+	 */
 	public PrintWriter writer;
+	/**
+	 * Just for screen output.
+	 */
 	public Vector<Integer> docNums;//just for screen output
+	/**
+	 * Just for screen output
+	 */
 	public Vector<Integer> eventNums;//just for screen output
+	/**
+	 * Ref of active event module
+	 */
 	public ActiveEventModule aem;
 	
+	/**
+	 * The threshold of similarity for add an event to an exited subtopic
+	 */
 	static double ThreadingThreshold = 0.4;
-	static int SummaryTitleNum = 10;
 	static int EffectiveDoc = 100;
 	static int EffectiveEvent = 10;
 	
@@ -208,7 +244,7 @@ public class TFISF {
 		return ret;
 	}
 	
-	public String extractSubtopicSummary(Subtopic st)
+	/*public String extractSubtopicSummary(Subtopic st)
 	{
 		String[] ss = st.summary.split("\n");
 		String ret = "";
@@ -275,7 +311,7 @@ public class TFISF {
 			}
 		}
 		return ret;
-	}
+	}*/
 	
 	boolean simTitle(String t1, String t2)
 	{
@@ -315,6 +351,11 @@ public class TFISF {
 		writer.close();
 	}
 	
+	/**
+	 * Get a subtopic by its is
+	 * @param id
+	 * @return
+	 */
 	public Subtopic getSubtopicById(int id)
 	{
 		for (int i = 0; i<subtopic.size(); i++)

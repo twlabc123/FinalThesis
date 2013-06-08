@@ -10,7 +10,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
  
- 
+/**
+ * Word split class
+ * @author twl
+ *
+ */
 public class SplitClient {
 	
 	public static String SENDEND = "#END#";

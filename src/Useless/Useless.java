@@ -6,7 +6,12 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 
 import Structure.Article;
-
+/**
+ * This class is for any useless function.<br>
+ * Totally not important.
+ * @author ailab
+ *
+ */
 public class Useless {
 
 	/**

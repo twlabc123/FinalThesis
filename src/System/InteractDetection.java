@@ -22,23 +22,74 @@ import Structure.Subtopic;
 import Structure.TermScore;
 import TopicThreading.MultiView;
 
+/**
+ * The function of this class is to extract interact between events from different
+ * subtopics off-line.
+ * @author twl
+ *
+ */
 public class InteractDetection {
-	
+	/**
+	 * The threshold of similarity that determines whether 2 adjacent event are the same event.
+	 */
 	static double SameEvent = 0.6;
+	/**
+	 * The threshold of similarity that determines whether 2 events from different subtopics
+	 * have interact.
+	 */
 	static double Interact = 0.5;
+	/**
+	 * The number of keywords that are used to describe the event.
+	 */
 	static int EventKeyword = 30;
+	/**
+	 * The bonus factor for entities when compute term scores
+	 */
 	static double EntityBonus = 2;
+	/**
+	 * The width of the time window.
+	 */
 	static int WindowWidth = 5;
 	
+	/**
+	 * The reader of the event input file
+	 */
 	BufferedReader eventReader;
+	/**
+	 * The reader of the subtopic input file
+	 */
 	BufferedReader subtopicReader;
+	/**
+	 * The writer of the output file
+	 */
 	PrintWriter writer;
+	/**
+	 * The event set
+	 */
 	HashMap<Integer, Event> event;
+	/**
+	 * The subtopic set
+	 */
 	Vector<Subtopic> subtopic;
+	/**
+	 * The stop word filter
+	 */
 	StopWordFilter swf;
+	/**
+	 * The term event frequency table
+	 */
 	HashMap<String, Integer> ef;
+	/**
+	 * The total number of the events
+	 */
 	int eventNum;
 	
+	/**
+	 * Initialize all para
+	 * @param eventInput
+	 * @param subtopicInput
+	 * @throws Exception
+	 */
 	public InteractDetection(String eventInput, String subtopicInput) throws Exception
 	{
 		FileInputStream istream = new FileInputStream(eventInput);
@@ -69,9 +120,9 @@ public class InteractDetection {
 	{
 		try
 		{
-//			InteractDetection inter = new InteractDetection("data/final/online_lc.txt", "data/final/online_st.txt");
-//			inter.mergeEvent("data/final/online_lc_merge.txt", "data/final/online_st_merge.txt");
-			InteractDetection inter = new InteractDetection("data/final/online_lc_merge.txt", "data/final/online_st_merge.txt");
+			InteractDetection inter = new InteractDetection("data/final/online_lc.txt", "data/final/online_st.txt");
+			inter.mergeEvent("data/final/online_lc_merge.txt", "data/final/online_st_merge.txt");
+			inter = new InteractDetection("data/final/online_lc_merge.txt", "data/final/online_st_merge.txt");
 			inter.loadEf();
 			inter.detect("data/final/inter.txt");
 			
@@ -82,6 +133,13 @@ public class InteractDetection {
 		}
 	}
 	
+	/**
+	 * Merge vary similar adjacent events.<br>
+	 * It's just a pro-process.
+	 * @param eventOutput
+	 * @param subtopicOutput
+	 * @throws Exception
+	 */
 	public void mergeEvent(String eventOutput, String subtopicOutput) throws Exception
 	{
 		for (int i = 0; i<subtopic.size(); i++)
@@ -139,6 +197,8 @@ public class InteractDetection {
 				st.event.remove(del.elementAt(j).intValue());
 			}
 		}
+		
+		// Sort event by time order.
 		PriorityQueue<Event> pq = new PriorityQueue<Event>(event.size(), this.cp);
 		pq.addAll(event.values());
 		FileOutputStream stream = new FileOutputStream(eventOutput);
@@ -174,6 +234,11 @@ public class InteractDetection {
 		writer.close();
 	}
 	
+	/**
+	 * Extract interact
+	 * @param output
+	 * @throws Exception
+	 */
 	public void detect(String output) throws Exception
 	{
 		FileOutputStream stream = new FileOutputStream(output);
@@ -210,6 +275,7 @@ public class InteractDetection {
 						for (int jj = 0; jj<st2.event.size(); jj++)
 						{
 							Event e2 = event.get(st2.event.elementAt(jj).id);
+							// Only when e2 is in e's time window and e2 is early than e
 							if (Article.getDay(e.start, e2.end) <= WindowWidth &&
 									e.start.compareTo(e2.start) >= 0)
 							{
@@ -231,6 +297,9 @@ public class InteractDetection {
 		writer.close();
 	}
 	
+	/**
+	 * Load and build term event frequency table
+	 */
 	public void loadEf()
 	{
 		eventNum = 0;
@@ -279,6 +348,12 @@ public class InteractDetection {
 		}
 	}
 	
+	/**
+	 * Simple similarity for merge
+	 * @param e1
+	 * @param e2
+	 * @return
+	 */
 	public double simpleSim(Event e1, Event e2)
 	{
 		HashSet<String> terms1 = new HashSet<String>();
@@ -313,6 +388,12 @@ public class InteractDetection {
 		return sim;
 	}
 	
+	/**
+	 * Complex similarity using keywords presentation
+	 * @param e1
+	 * @param e2
+	 * @return
+	 */
 	public double complexSim(Event e1, Event e2)
 	{
 		double ret = 0;

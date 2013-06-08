@@ -15,6 +15,12 @@ import java.util.Vector;
 import DataPrepare.StopWordFilter;
 import Structure.*;
 
+/**
+ * Burst extraction.<br>
+ * Has been abandoned.
+ * @author twl
+ *
+ */
 public class BurstExtraction {
 	
 	Vector<Event> event;

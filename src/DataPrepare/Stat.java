@@ -7,7 +7,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashSet;
 
-
+/**
+ * The function of this class is to gather statistics of Sogou new data
+ * @author twl
+ *
+ */
 public class Stat {
 
 	/**
@@ -77,7 +81,7 @@ public class Stat {
 				}
 			}
 			writer.println("Doc Num : " + docNum);
-			writer.println("Term Num Biaodian : " + termNumBiaodian);
+			writer.println("Term Num Punctuation : " + termNumBiaodian);
 			writer.println("Term Num : " + termNum);
 			writer.println("Different Term Num : " + term.size());
 			writer.println("Char Num : " + charNum);

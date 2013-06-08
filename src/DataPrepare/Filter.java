@@ -11,12 +11,36 @@ import java.util.HashMap;
 import java.util.HashSet;
 import Structure.ArticleExtend;
 
+/**
+ * Use tf-idf to filter the unrelated documents
+ * @author twl
+ *
+ */
 public class Filter {
+	/**
+	 * Documents
+	 */
 	ArrayList<ArticleExtend> data;
+	/**
+	 * term doc-frequency
+	 */
 	HashMap<String, Integer> df;
+	/**
+	 * Background term-frequency
+	 */
 	HashMap<String, Integer> bgtf;// background tf
+	/**
+	 * Total number of the documents
+	 */
 	int docTotalNum;
+	/**
+	 * Stop word filter
+	 */
 	StopWordFilter swf;
+	/**
+	 * Similarity threshold for filter
+	 */
+	static double Threshold = 0.1;
 	
 	/**
 	 * @param args
@@ -26,6 +50,14 @@ public class Filter {
 		Filter f = new Filter();
 		f.filtNoise("data/news_split_sort_cut.txt", "data/news_split_sort_cut_filted.txt", "data/similarity.txt");
 	}
+	
+	/**
+	 * Computer the similarity of doc a & b(or background)<br>
+	 * Currently use term boolean vector. similarity = |A and B| / |A or B|;
+	 * @param a first doc
+	 * @param b second doc; if b == null, use background tf instead.
+	 * @return the similarity of doc a and b(or background)
+	 */
 	public double similarity(ArticleExtend a, ArticleExtend b) { // if b == null, use bgtf;
 		// TODO Auto-generated method stub
 		double ret = 0;
@@ -61,6 +93,9 @@ public class Filter {
 		return ret;
 	}
 	
+	/**
+	 * Initialize all variables
+	 */
 	Filter()
 	{
 		data = new ArrayList<ArticleExtend>();
@@ -68,9 +103,14 @@ public class Filter {
 		bgtf = new HashMap<String, Integer>();
 		docTotalNum = 0;
 		swf = new StopWordFilter();
-		swf.load("data/stopwords.txt");
+		swf.load(StopWordFilter.StopWordDic);
 	}
 	
+	/**
+	 * Load all docs and build df table and background tf table.
+	 * Has been abandoned.
+	 * @param input String The data file path
+	 */
 	public void load(String input)
 	{
 		try {
@@ -126,6 +166,13 @@ public class Filter {
 		}
 	}
 	
+	/**
+	 * Filter the unrelated docs using 0-1 similarity.<br>
+	 * Those docs that have a similarity with backgound tf lower than threshold.
+	 * @param input The input document data file.
+	 * @param output The output document data file.
+	 * @param similarity The similarities output file. Just for debug.
+	 */
 	public void filtNoise(String input, String output, String similarity)
 	{
 		try

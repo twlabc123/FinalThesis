@@ -7,6 +7,12 @@ import DataPrepare.StopWordFilter;
 import Structure.Burst;
 import Structure.Subtopic;
 
+/**
+ * Similarity using Burst expression.<br>
+ * Has been abandoned.
+ * @author twl
+ *
+ */
 public class BurstSim extends TFISF {
 
 	/**

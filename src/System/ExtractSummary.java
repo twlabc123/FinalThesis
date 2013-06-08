@@ -6,10 +6,24 @@ import Structure.ActiveEvent;
 import Structure.Event;
 import TopicThreading.TFISF;
 
+/**
+ * The function of this class is to extract summary from sentences of an event
+ * @author twl
+ *
+ */
 public class ExtractSummary {
 	
+	/**
+	 * A bonus factor for title
+	 */
 	static double TitleBonus = 1;
-
+	
+	/**
+	 * Extract a summary from the event
+	 * @param e
+	 * @param sa provide the subtopic frequency
+	 * @return
+	 */
 	public static String ExtractEventSummary(Event e, TFISF sa)
 	{
 		String ret = "";
@@ -51,9 +65,16 @@ public class ExtractSummary {
 		return ret;
 	}
 	
+	/**
+	 * Get the score of a sentence
+	 * @param sent
+	 * @param e
+	 * @param sa
+	 * @return
+	 */
 	static double computeScore(String sent, Event e, TFISF sa)
 	{
-		if (sent.split(" ").length >= 30) return -0.2;
+		if (sent.split(" ").length >= 30) return -0.2;// too long
 		int length = 0;
 		double ret = 0;
 		String[] terms = sent.split(" ");
@@ -67,11 +88,17 @@ public class ExtractSummary {
 				ret += e.tf.get(term) * isf;
 			}
 		}
-		if (length < 3) return -0.1;
+		if (length < 3) return -0.1;// too short
 		if (length != 0) ret /= length;
 		return ret;
 	}
 	
+	/**
+	 * Return true if the two String are too similar
+	 * @param t1
+	 * @param t2
+	 * @return
+	 */
 	public static boolean simTitle(String t1, String t2)
 	{
 		HashSet<String> term1 = new HashSet<String>();

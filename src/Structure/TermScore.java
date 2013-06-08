@@ -2,6 +2,11 @@ package Structure;
 
 import java.util.Comparator;
 
+/**
+ * The representation of term and its score pair
+ * @author twl
+ *
+ */
 public class TermScore implements Comparable {
 	
 	public String term;

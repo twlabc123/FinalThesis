@@ -7,6 +7,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
+/**
+ * The function of this class is sampling documents from original data.<br>
+ * This is only used in test and debugging, so I am too lazy to write Javadoc
+ * for it...
+ * @author twl
+ *
+ */
 public class Sample {
 	public static void main(String[] args)
 	{
@@ -66,10 +73,9 @@ public class Sample {
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			PrintWriter writer = new PrintWriter(sw);
 			BufferedReader reader = new BufferedReader(sr);
-			String line;
 			int RATE = 10;
 			int count = 0; 
-			while ((line = reader.readLine()) != null)
+			while ((reader.readLine()) != null)
 			{
 				String url = reader.readLine();
 				String docN = reader.readLine();

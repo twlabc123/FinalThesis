@@ -3,16 +3,16 @@ package Structure;
 import java.io.BufferedReader;
 import java.util.HashMap;
 
+/**
+ * Add tf table to Article.
+ * @see Article
+ * @author twl
+ *
+ */
 public class ArticleExtend extends Article {
-
 	/**
-	 * @param args
+	 * tf table
 	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-	
 	public HashMap<String, Integer> tf;
 	
 	ArticleExtend()
@@ -29,7 +29,12 @@ public class ArticleExtend extends Article {
 		this.source = a.source;
 		tf = new HashMap<String, Integer>();
 	}
-	
+	/**
+	 * @see article
+	 * @param reader
+	 * @return
+	 * @throws Exception
+	 */
 	public static ArticleExtend readArticle(BufferedReader reader) throws Exception
 	{
 		ArticleExtend ret = new ArticleExtend();
@@ -50,6 +55,10 @@ public class ArticleExtend extends Article {
 		return ret;
 	}
 	
+	/**
+	 * Get naive Article representation(without tf table).
+	 * @return
+	 */
 	public Article getArticle()
 	{
 		Article ret = new Article();

@@ -9,16 +9,50 @@ import java.util.Vector;
 
 import DataPrepare.StopWordFilter;
 
+/**
+ * The event representation class
+ * @author twl
+ *
+ */
 public class Event {
 	
+	/**
+	 * Current total number of events.
+	 */
 	public static int TotalEventNum = 0;
+	/**
+	 * Unique id of the event
+	 */
 	public int id;
+	/**
+	 * Articles in this event
+	 */
 	public Vector<ArticleExtend> article;
+	/**
+	 * The start time of the event
+	 */
 	public String start;
+	/**
+	 * The end time of the event
+	 */
 	public String end;
+	/**
+	 * The time center of the event. (in hours)
+	 */
 	public long center;
+	/**
+	 * tf table of the event
+	 */
 	public HashMap<String, Integer> tf;
+	/**
+	 * df table of the event
+	 */
 	public HashMap<String, Integer> df;
+	/**
+	 * The flag of whether the event has new documents added in.<br>
+	 * This is useful when the event is in active event set, because new documents
+	 * could be added into during processing batches of the documents.
+	 */
 	public boolean hasNewDoc;
 	
 	public Event()
@@ -44,6 +78,12 @@ public class Event {
 		hasNewDoc = e.hasNewDoc;
 	}
 	
+	/**
+	 * Read an event from input file
+	 * @param reader
+	 * @return
+	 * @throws Exception
+	 */
 	public static Event readEvent(BufferedReader reader) throws Exception
 	{
 		String line = reader.readLine();
@@ -64,6 +104,12 @@ public class Event {
 		return ret;
 	}
 	
+	/**
+	 * Build an event from articles
+	 * @param doc
+	 * @return
+	 * @throws ParseException
+	 */
 	public static Event getEventFromArticle(Vector<ArticleExtend> doc) throws ParseException
 	{
 		Event ret = new Event();
@@ -82,6 +128,12 @@ public class Event {
 		return ret;
 	}
 	
+	/**
+	 * Add an article to the event
+	 * @param a Article
+	 * @param swf Stop word filter
+	 * @throws ParseException
+	 */
 	public void addArticle(ArticleExtend a, StopWordFilter swf) throws ParseException
 	{
 		article.add(a);
@@ -96,16 +148,17 @@ public class Event {
 		long temp = 0;
 		for (int i = 0; i<article.size(); i++)
 		{
+			// Calculate time center
 			temp += Article.getDate(article.elementAt(i).time).getTime()/3600/1000;
 		}
 		center = temp/article.size();
 		String[] ss = a.content.split(" ");
 		HashSet<String> temp2 = new HashSet<String>();
+		// Update tf,df table
 		for (int k = 0; k<ss.length; k++)
 		{
 			String term = ss[k];
 			if (swf.isStopWord(term)) continue;
-			//term = term.substring(0,term.lastIndexOf('/'));
 			if (tf.containsKey(term))
 			{
 				Integer tempI = tf.get(term);
@@ -136,6 +189,11 @@ public class Event {
 		hasNewDoc = true;
 	}
 	
+	/**
+	 * Print the event to the output file
+	 * @param writer
+	 * @throws Exception
+	 */
 	public void printEvent(PrintWriter writer) throws Exception
 	{
 		writer.println("<event>");

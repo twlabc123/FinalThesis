@@ -10,6 +10,12 @@ import java.util.Vector;
 
 import Structure.Event;
 
+/**
+ * The function of this class is to get statistics from event cluster results.<br>
+ * Not important.
+ * @author twl
+ *
+ */
 public class EventStat {
 
 	Vector<Integer> eventScale;

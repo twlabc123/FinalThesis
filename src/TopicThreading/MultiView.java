@@ -8,38 +8,48 @@ import Structure.Subtopic;
 import Structure.TermScore;
 import System.ActiveEventModule;
 
+/**
+ * Similarity using keywords,
+ * @author twl
+ *
+ */
 public class MultiView extends TFISF {
-
-	static double Alpha = -0.01; // time fix with e^(-alpha*interval)
-	public static int SubtopicKeyword = 30;
-	public static double EntityBonus = 2;
 	/**
-	 * @param args
+	 * time fix with e^(-alpha*interval)
 	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
+	static double Alpha = -0.01;
+	/**
+	 * The number of keywords to represent the subtopic
+	 */
+	public static int SubtopicKeyword = 30;
+	/**
+	 * The bonus factor for entities when computing term scores
+	 */
+	public static double EntityBonus = 2;
 	
 	public MultiView(ActiveEventModule aem, String output) throws Exception {
 		// TODO Auto-generated constructor stub
 		super(aem, output);
 	}
-	
+
+	/**
+	 * 
+	 */
 	public double similarity(Subtopic a, ActiveEvent e) throws Exception {
 		// TODO Auto-generated method stub
 		double ret = 0;
 		
 		// Different from TFISF
-		long interval = (e.center - a.center) / 24;
+		long interval = (e.center - a.center) / 24;// interval in days
 		if (interval < 0) interval = 0;
 		double fix = Math.exp(interval*Alpha);
-		if (fix < ThreadingThreshold*ThreadingThreshold) a.active = false;
+		if (fix < ThreadingThreshold*ThreadingThreshold) a.active = false;// just for speeding
 		if (fix <= ThreadingThreshold) return 0;
 		
 		PriorityQueue<TermScore> pq = this.getKeyword(a);
 		HashMap<String, Double> temp = new HashMap<String, Double>();
 		double total = 0;
+		// Count the first SubtopicKeyword ters
 		for (int i = 0; i<this.SubtopicKeyword && !pq.isEmpty(); i++)
 		{
 			TermScore ts = pq.poll();
@@ -69,6 +79,12 @@ public class MultiView extends TFISF {
 		return ret;
 	}
 	
+	/**
+	 * Extract keywords from the subtopic
+	 * @param a
+	 * @return
+	 * @throws Exception
+	 */
 	public String keyWords(Subtopic a) throws Exception
 	{
 		String ret = "";

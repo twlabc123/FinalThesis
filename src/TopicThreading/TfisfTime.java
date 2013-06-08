@@ -8,6 +8,11 @@ import Structure.Subtopic;
 import Structure.TermScore;
 import System.ActiveEventModule;
 
+/**
+ * Similar to TF-isf. Only add time fix
+ * @author twl
+ *
+ */
 public class TfisfTime extends TFISF {
 	
 	

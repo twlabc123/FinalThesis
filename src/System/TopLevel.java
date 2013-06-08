@@ -9,6 +9,11 @@ import Structure.ArticleExtend;
 import TopicThreading.MultiView;
 import EventCluster.EventClusterTFIDF;
 
+/**
+ * Top level of this system
+ * @author twl
+ *
+ */
 public class TopLevel {
 	
 	EventClusterTFIDF ec;

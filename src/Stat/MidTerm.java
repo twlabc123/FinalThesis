@@ -12,7 +12,12 @@ import java.util.Vector;
 
 import Structure.Article;
 import Structure.Subtopic;
-
+/**
+ * The function of this class is to get statistics from event cluster results.<br>
+ * Not important.
+ * @author twl
+ *
+ */
 public class MidTerm {
 	
 	public int stNum;

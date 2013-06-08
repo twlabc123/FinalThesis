@@ -11,6 +11,11 @@ import java.util.List;
 
 import Structure.Article;
 
+/**
+ * The function of this class is to sort articles by their time order.
+ * @author twl
+ *
+ */
 public class Sort {
 
 	/**
@@ -20,7 +25,11 @@ public class Sort {
 		// TODO Auto-generated method stub
 		Sort.sort("data/final/news_lite.txt", "data/final/news_lite_sorted.txt");
 	}
-	
+	/**
+	 * Use Collection.sort to sort articles.
+	 * @param input
+	 * @param output
+	 */
 	public static void sort(String input, String output)
 	{
 		try {

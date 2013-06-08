@@ -7,26 +7,38 @@ import Structure.ActiveEvent;
 import Structure.Subtopic;
 import TopicThreading.MultiView;
 
+/**
+ * The function of this class is to maintain a active event set and act as an
+ * intermediary between the event cluster and the subtopic analysis.
+ * @author twl
+ *
+ */
 public class ActiveEventModule {
 
+	/**
+	 * The active event set
+	 */
 	Vector<ActiveEvent> activeEvent;
+	/**
+	 * The ref of the event cluster module
+	 */
 	EventClusterTFIDF ec;
 	//TfisfTime sa;
-	MultiView sa;
-	
 	/**
-	 * @param args
+	 * The ref of the subtopic analysis module
 	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
+	MultiView sa;
 	
 	ActiveEventModule()
 	{
 		activeEvent = new Vector<ActiveEvent>(); 
 	}
 	
+	/**
+	 * Get an event by its id
+	 * @param id
+	 * @return
+	 */
 	public ActiveEvent getEventById(int id)
 	{
 		for (int i = 0; i<activeEvent.size(); i++)
@@ -39,6 +51,12 @@ public class ActiveEventModule {
 		return null;
 	}
 	
+	/**
+	 * Add the summary of the event to the subtopic.<br>
+	 * The current summary String implementation is not good. Could use vector or
+	 * others for better use.
+	 * @param ae
+	 */
 	public void addSummaryToSubtopic(ActiveEvent ae)
 	{
 		for (int j = 0; j<ae.stId.size(); j++)
@@ -65,6 +83,11 @@ public class ActiveEventModule {
 		}
 	}
 	
+	/**
+	 * Remove the event from all the subtopics that comtains it.
+	 * @param ae
+	 * @throws Exception
+	 */
 	public void removeChangedEventFromSubtopic(ActiveEvent ae) throws Exception
 	{
 		for (int j = 0; j<ae.stId.size(); j++)
@@ -87,6 +110,10 @@ public class ActiveEventModule {
 		}
 	}
 	
+	/**
+	 * Remove all the changed events from relating subtopics at once.
+	 * @throws Exception
+	 */
 	public void removeChangedEventFromSubtopic() throws Exception
 	{
 		for (int i = 0; i<activeEvent.size(); i++)
@@ -116,11 +143,24 @@ public class ActiveEventModule {
 		}
 	}
 	
+	/**
+	 * Add a event to a subtopic and build a link from this event to the last event
+	 * in the subtopic
+	 * @param ae
+	 * @param st
+	 * @throws Exception
+	 */
 	public void linkEventToSubtopic(ActiveEvent ae, Subtopic st) throws Exception
 	{
 		ae.stId.add(st.id);
 	}
 	
+	/**
+	 * Remove the event from the subtopic
+	 * @param eventId
+	 * @param st
+	 * @throws Exception
+	 */
 	public void delinkEventToSubtopic(int eventId, Subtopic st) throws Exception
 	{
 		ActiveEvent ae = getEventById(eventId);
@@ -136,6 +176,10 @@ public class ActiveEventModule {
 		}
 	}
 	
+	/**
+	 * Remove the subtopic from the active event set.
+	 * @param st
+	 */
 	public void removeSubtopic(Subtopic st)
 	{
 		for (int i = 0; i<activeEvent.size(); i++)
@@ -144,12 +188,8 @@ public class ActiveEventModule {
 			for (int j = 0; j<ae.stId.size(); j++)
 			{
 				if (ae.stId.elementAt(j) == st.id)
-				//If the events always become inactive later than subtopics, then
-				//no currently active events can affect the subtopic that is being deleted,
-				//so this situation should not happen theoretically.
 				{
 					ae.stId.remove(j);
-					//if this situation indeed happens, we simply delete the subtopic ref from the event...
 				}
 			}
 		}

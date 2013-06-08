@@ -13,17 +13,54 @@ import TopicThreading.TFISF;
 
 public class Subtopic {
 	
+	/**
+	 * Current max id index
+	 */
 	public static int ID = 0;
+	/**
+	 * unique id of the subtopic
+	 */
 	public int id;
+	/**
+	 * tf table of the subtopic
+	 */
 	public HashMap<String, Integer> tf;
+	/**
+	 * df table of the subtopic
+	 */
 	public HashMap<String, Integer> df;
+	/**
+	 * The events that are contained by the subtopic
+	 */
 	public Vector<EventEdge> event;
+	/**
+	 * The start time of the subtopic
+	 */
 	public String start;
+	/**
+	 * The end time of the subtopic
+	 */
 	public String end;
+	/**
+	 * The keywords of the subtopic
+	 */
 	public String keyword;
+	/**
+	 * The time center of the subtopic
+	 */
 	public long center;
+	/**
+	 * The number of the documents of the subtopic
+	 */
 	public int docNum;
+	/**
+	 * The summary of the subtopic
+	 */
 	public String summary;
+	/**
+	 * The flag of whether the subtopic is active. It is used for deleting
+	 * non-active subtopics from the active set.
+	 */
 	public boolean active;
 	
 	public Subtopic(ActiveEvent e)
@@ -58,6 +95,12 @@ public class Subtopic {
 		active = true;
 	}
 	
+	/**
+	 * Read a subtopic from the input file
+	 * @param reader
+	 * @return
+	 * @throws IOException
+	 */
 	public static Subtopic readSubtopic(BufferedReader reader) throws IOException
 	{
 		Subtopic ret = new Subtopic();
@@ -86,6 +129,12 @@ public class Subtopic {
 		return ret;
 	}
 	
+	/**
+	 * Print the subtopic to the output file
+	 * @param writer
+	 * @param model
+	 * @throws Exception
+	 */
 	public void printSubtopic(PrintWriter writer, TFISF model) throws Exception
 	{
 		writer.println("<subtopic>");
@@ -119,6 +168,12 @@ public class Subtopic {
 		
 	}
 	
+	/**
+	 * Add an event to the subtopic
+	 * @param e the added event
+	 * @param sim the similarity between the event and the subtopic
+	 * @throws Exception
+	 */
 	public void addEvent(ActiveEvent e, double sim) throws Exception
 	{
 		Subtopic a = this;
@@ -154,10 +209,16 @@ public class Subtopic {
 		a.docNum += e.article.size();
 	}
 	
+	/**
+	 * Remove an event from the subtopic
+	 * @param ae the removed event
+	 * @param aem the ref of the active event module
+	 */
 	public void removeEvent(ActiveEvent ae, ActiveEventModule aem)
 	{
 		for (int k = event.size()-1; k>=0; k--)
 		{
+			// Find the target event
 			if (event.elementAt(k).id == ae.id)
 			{
 				for (String term : ae.tf.keySet())
@@ -184,8 +245,9 @@ public class Subtopic {
 				break;
 			}
 		}
-		if (event.size() > 0)
+		if (event.size() > 0)// Still have other events
 		{
+			// Update start, end, center and others
 			boolean resetStart = start.equals(ae.start);
 			if (resetStart) start = "5012-01-01";
 			boolean resetEnd = end.equals(ae.end);

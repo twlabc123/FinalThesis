@@ -15,6 +15,11 @@ import Structure.ArticleExtend;
 import Structure.Event;
 import Structure.Subtopic;
 
+/**
+ * Similarity using tf-isf
+ * @author twl
+ *
+ */
 public class TFIDF extends TFISF {
 
 	public Vector<Subtopic> subtopic;

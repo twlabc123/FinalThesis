@@ -2,8 +2,16 @@ package Structure;
 
 import java.util.Vector;
 
+/**
+ * The active event representation class<br>
+ * Add an vector of the indexes of the subtopics that contain this event.
+ * @author twl
+ *
+ */
 public class ActiveEvent extends Event {
-	
+	/**
+	 * The vector of the indexes of the subtopics that contain this event.
+	 */
 	public Vector<Integer> stId;//the indexes of the subtopics that contains the event
 	
 
