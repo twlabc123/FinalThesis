@@ -2,10 +2,16 @@ package Useless;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.HashMap;
 
+import DataPreprocess.Sort;
 import Structure.Article;
+import Structure.ArticleExtend;
+import Structure.Event;
 /**
  * This class is for any useless function.<br>
  * Totally not important.
@@ -19,38 +25,32 @@ public class Useless {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Useless.stat("data/news_split_sort.txt");
+		Useless.stat("data/final/lc_test.txt","data/final/test.txt");
+		Sort.sort("data/final/test.txt", "data/final/test_sorted.txt");
 	}
 	
-	public static void stat(String input)
+	public static void stat(String input, String output)
 	{
-		try {
+		try
+		{
+			FileOutputStream stream = new FileOutputStream(output);
+			OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
+			PrintWriter writer = new PrintWriter(sw);
 			FileInputStream istream = new FileInputStream(input);
 			InputStreamReader sr = new InputStreamReader(istream, "utf-8");
 			BufferedReader reader = new BufferedReader(sr);
-			Article a;
-			HashMap<String, Integer> m = new HashMap<String, Integer>();
-			while((a = Article.readArticle(reader)) != null)
+			Event e;
+			while ((e = Event.readEvent(reader)) != null)
 			{
-				String year = a.time.substring(0,4);
-				if (m.containsKey(year))
+				for (ArticleExtend a : e.article)
 				{
-					Integer i = m.get(year);
-					m.remove(year);
-					m.put(year, i+1);
-				}
-				else
-				{
-					m.put(year, 1);
+					a.printArticle(writer);
 				}
 			}
-			for (int i = 1996; i<=2012; i++)
-			{
-				System.out.println(i+" : "+m.get(i+""));
-			}
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			reader.close();
+			writer.close();
+		} catch (Exception e)
+		{
 			e.printStackTrace();
 		}
 		

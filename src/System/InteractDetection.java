@@ -14,13 +14,13 @@ import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Vector;
 
-import DataPrepare.StopWordFilter;
+import DataPreprocess.StopWordFilter;
 import Structure.Article;
 import Structure.Event;
-import Structure.EventEdge;
+import Structure.Node;
 import Structure.Subtopic;
 import Structure.TermScore;
-import TopicThreading.MultiView;
+import TopicThreading.Similarity.TfisfKeyword;
 
 /**
  * The function of this class is to extract interact between events from different
@@ -113,7 +113,7 @@ public class InteractDetection {
 		}
 		subtopicReader.close();
 		swf = new StopWordFilter();
-		swf.load("data/stopwords.txt");
+		swf.load(StopWordFilter.StopWordDic);
 	}
 	
 	public static void main(String[] args)
@@ -147,6 +147,8 @@ public class InteractDetection {
 			Subtopic st = subtopic.elementAt(i);
 			String[] summary = st.summary.split("\n");
 			st.summary = "";
+			
+			// Sort the event by time order using bubble sort
 			for (int j = 0; j<st.event.size(); j++)
 			{
 				String s1 = event.get(st.event.elementAt(j).id).start;
@@ -155,7 +157,7 @@ public class InteractDetection {
 					String s2 = event.get(st.event.elementAt(k).id).start;
 					if (s1.compareTo(s2) > 0)
 					{
-						EventEdge temp = st.event.elementAt(j);
+						Node temp = st.event.elementAt(j);
 						st.event.set(j, st.event.elementAt(k));
 						st.event.set(k, temp);
 						String tempS = summary[j];
@@ -167,13 +169,16 @@ public class InteractDetection {
 				st.summary += summary[j];
 			}
 			summary = st.summary.split("\n");
-			st.summary = summary[0];
-			Vector<Integer> del = new Vector<Integer>();
+			
+			st.summary = summary[0];// just for debug
+			
+			Vector<Integer> del = new Vector<Integer>();// the index of events that should be deleted
 			for (int j = 1; j<st.event.size(); j++)
 			{
 				Event e = event.get(st.event.elementAt(j).id);
 				Event last = event.get(st.event.elementAt(j-1).id);
 				double sim = simpleSim(e, last);
+				// Add the duplicative event index to deleted vector
 				if (sim > SameEvent)
 				{
 					del.add(j);
@@ -185,6 +190,7 @@ public class InteractDetection {
 				}
 			}
 			
+			// delete all duplicative events
 			for (int j = del.size() - 1; j >= 0; j--)
 			{
 				Event e = event.get(st.event.elementAt(del.elementAt(j)).id);
@@ -192,27 +198,32 @@ public class InteractDetection {
 				last.article.addAll(e.article);
 				if (e.start.compareTo(last.start) < 0) last.start = e.start;
 				if (e.end.compareTo(last.end) > 0) last.end = e.end;
-				System.out.println(e.id + " " + last.id + " "+ summary[del.elementAt(j)]);
+				//System.out.println(e.id + " " + last.id + " "+ summary[del.elementAt(j)]);
 				event.remove(st.event.elementAt(del.elementAt(j)).id);
 				st.event.remove(del.elementAt(j).intValue());
 			}
 		}
-		
-		// Sort event by time order.
-		PriorityQueue<Event> pq = new PriorityQueue<Event>(event.size(), this.cp);
-		pq.addAll(event.values());
+
+		// OUTPUT		
+		// Output event
 		FileOutputStream stream = new FileOutputStream(eventOutput);
 		OutputStreamWriter sw = new OutputStreamWriter(stream, "utf-8");
 		writer = new PrintWriter(sw);
+		// Sort event by time order again, because merging may cause event time representation shifts.
+		PriorityQueue<Event> pq = new PriorityQueue<Event>(event.size(), this.cp);
+		pq.addAll(event.values());
 		while(!pq.isEmpty())
 		{
 			Event e = pq.poll();
 			e.printEvent(writer);
 		}
 		writer.close();
+		
+		// Output subtopic
 		stream = new FileOutputStream(subtopicOutput);
 		sw = new OutputStreamWriter(stream, "utf-8");
 		writer = new PrintWriter(sw);
+		//Sort by start time order
 		for(int i = 0; i<subtopic.size(); i++)
 		{
 			Subtopic s1 = subtopic.elementAt(i);
@@ -235,8 +246,8 @@ public class InteractDetection {
 	}
 	
 	/**
-	 * Extract interact
-	 * @param output
+	 * Extract interact between events in different subtopics
+	 * @param output output file path and name
 	 * @throws Exception
 	 */
 	public void detect(String output) throws Exception
@@ -248,7 +259,7 @@ public class InteractDetection {
 		for (int i = 0; i<subtopic.size(); i++)
 		{
 			subtopic.elementAt(i).start = event.get(subtopic.elementAt(i).event.firstElement().id).start;
-			String end = "2011";
+			String end = "2011";// initialize with a small value
 			for (int j = 0; j<subtopic.elementAt(i).event.size(); j++)
 			{
 				String e = event.get(subtopic.elementAt(i).event.elementAt(j).id).end;
@@ -257,27 +268,29 @@ public class InteractDetection {
 			subtopic.elementAt(i).end = end;
 		}
 		
+		//first subtopic
 		for (int i = 0; i<subtopic.size(); i++)
 		{
 			Subtopic st = subtopic.elementAt(i);
 			String[] sum = st.summary.split("\n");
+			// first event
 			for (int j = 0; j<st.event.size(); j++)
 			{
 				Event e = event.get(st.event.elementAt(j).id);
+				// second subtopic
 				for (int ii = 0; ii<subtopic.size(); ii++)
 				{
 					if (ii == i) continue;
 					Subtopic st2 = subtopic.elementAt(ii);
 					String[] sum2 = st2.summary.split("\n");
-					if (st2.start.compareTo(e.start)<=0 ||
-							st2.end.compareTo(e.end) >= 0)
+					if (st2.start.compareTo(e.start)<=0 || st2.end.compareTo(e.end) >= 0)// the time span of the two event has cross-over
 					{
+						// second event
 						for (int jj = 0; jj<st2.event.size(); jj++)
 						{
 							Event e2 = event.get(st2.event.elementAt(jj).id);
-							// Only when e2 is in e's time window and e2 is early than e
 							if (Article.getDay(e.start, e2.end) <= WindowWidth &&
-									e.start.compareTo(e2.start) >= 0)
+									e.start.compareTo(e2.start) >= 0)// Only when e2 is in e's time window and e2 is early than e
 							{
 								double sim = complexSim(e2, e);
 								if (sim > Interact)
@@ -286,6 +299,7 @@ public class InteractDetection {
 									writer.println("<from>"+e.id+"</from>");
 									writer.println("<to>"+e2.id+"</to>");
 									writer.println("</interact>");
+									System.out.println(i+" "+ii);
 									System.out.println(sum[j]+" ---> "+sum2[jj]);
 								}
 							}
@@ -298,7 +312,8 @@ public class InteractDetection {
 	}
 	
 	/**
-	 * Load and build term event frequency table
+	 * Load and build term event frequency table.<br>
+	 * The event frequncy is used in the next similarity computing. It act like document-frequecy in tfidf or subtopic-frequency in tfisf.
 	 */
 	public void loadEf()
 	{
@@ -349,7 +364,8 @@ public class InteractDetection {
 	}
 	
 	/**
-	 * Simple similarity for merge
+	 * Simple similarity for merging the same events<br>
+	 * Use |V1 /\ V2| / |V1 \/ V2| for similarity.
 	 * @param e1
 	 * @param e2
 	 * @return
@@ -389,7 +405,8 @@ public class InteractDetection {
 	}
 	
 	/**
-	 * Complex similarity using keywords presentation
+	 * Complex similarity using keywords presentation for interact detection.<br>
+	 * Use keyword representation for similarity.
 	 * @param e1
 	 * @param e2
 	 * @return
@@ -425,6 +442,11 @@ public class InteractDetection {
 		return ret;
 	}
 	
+	/**
+	 * Compute the score of each term
+	 * @param a
+	 * @return
+	 */
 	public PriorityQueue<TermScore> getKeyword(Event a)
 	{
 		PriorityQueue<TermScore> pq = new PriorityQueue<TermScore>(EventKeyword, TermScore.cp);

@@ -2,10 +2,13 @@ package System;
 
 import java.util.Vector;
 
-import EventCluster.EventClusterTFIDF;
+import EventClustering.EventCluster;
+import EventClustering.EventClusterBool;
 import Structure.ActiveEvent;
 import Structure.Subtopic;
-import TopicThreading.MultiView;
+import TopicThreading.TopicThreading;
+import TopicThreading.Similarity.Tfisf;
+import TopicThreading.Similarity.TfisfKeyword;
 
 /**
  * The function of this class is to maintain a active event set and act as an
@@ -22,12 +25,12 @@ public class ActiveEventModule {
 	/**
 	 * The ref of the event cluster module
 	 */
-	EventClusterTFIDF ec;
+	EventCluster ec;
 	//TfisfTime sa;
 	/**
 	 * The ref of the subtopic analysis module
 	 */
-	MultiView sa;
+	TopicThreading tt;
 	
 	ActiveEventModule()
 	{
@@ -62,24 +65,10 @@ public class ActiveEventModule {
 		for (int j = 0; j<ae.stId.size(); j++)
 		{
 			int id = ae.stId.elementAt(j);
-			Subtopic st = sa.getSubtopicById(id);
+			Subtopic st = tt.getSubtopicById(id);
 			if (st.summary.length() > 0) st.summary += "\n";
-			String summary = ExtractSummary.ExtractEventSummary(ae, sa);
+			String summary = ExtractSummary.ExtractEventSummary(ae, tt);
 			st.summary += summary;
-//			for (int k = 0; k<ae.article.size(); k++)
-//			{
-//				st.summary += ae.article.elementAt(k).time.substring(0,10);
-//				st.summary += " ";
-//				st.summary += ae.article.elementAt(k).title;
-//				st.summary += "\n";
-//			}
-//			for (int i = 0; i<st.event.size(); i++)
-//			{
-//				if (st.event.elementAt(i).id == ae.id)
-//				{
-//					st.summary += "sim: "+st.event.elementAt(i).value;
-//				}
-//			}
 		}
 	}
 	
@@ -93,17 +82,17 @@ public class ActiveEventModule {
 		for (int j = 0; j<ae.stId.size(); j++)
 		{
 			int id = ae.stId.elementAt(j);
-			Subtopic st = sa.getSubtopicById(id);
+			Subtopic st = tt.getSubtopicById(id);
 			st.removeEvent(ae, this);
 		}
 		ae.stId.clear();
 		int i = 0;
-		while(i<sa.subtopic.size())
+		while(i<tt.subtopic.size())
 		{
-			if (sa.subtopic.elementAt(i).event.size() <= 0)
+			if (tt.subtopic.elementAt(i).event.size() <= 0)
 			{
-				removeSubtopic(sa.subtopic.elementAt(i));
-				sa.subtopic.remove(i);
+				removeSubtopic(tt.subtopic.elementAt(i));
+				tt.subtopic.remove(i);
 				i--;
 			}
 			i++;
@@ -124,19 +113,21 @@ public class ActiveEventModule {
 				for (int j = 0; j<ae.stId.size(); j++)
 				{
 					int id = ae.stId.elementAt(j);
-					Subtopic st = sa.getSubtopicById(id);
+					Subtopic st = tt.getSubtopicById(id);
 					st.removeEvent(ae, this);
 				}
 				ae.stId.clear();
 			}
 		}
 		int i = 0;
-		while(i<sa.subtopic.size())
+		// remove empty subtopics
+		while(i<tt.subtopic.size())
 		{
-			if (sa.subtopic.elementAt(i).event.size() <= 0)
+			if (tt.subtopic.elementAt(i).event.size() <= 0)
 			{
-				removeSubtopic(sa.subtopic.elementAt(i));
-				sa.subtopic.remove(i);
+				removeSubtopic(tt.subtopic.elementAt(i));
+				tt.subtopic.remove(i);
+				tt.stNum--;
 				i--;
 			}
 			i++;
@@ -150,7 +141,7 @@ public class ActiveEventModule {
 	 * @param st
 	 * @throws Exception
 	 */
-	public void linkEventToSubtopic(ActiveEvent ae, Subtopic st) throws Exception
+	public void addEventToSubtopic(ActiveEvent ae, Subtopic st) throws Exception
 	{
 		ae.stId.add(st.id);
 	}
@@ -161,7 +152,7 @@ public class ActiveEventModule {
 	 * @param st
 	 * @throws Exception
 	 */
-	public void delinkEventToSubtopic(int eventId, Subtopic st) throws Exception
+	public void removeEventFromSubtopic(int eventId, Subtopic st) throws Exception
 	{
 		ActiveEvent ae = getEventById(eventId);
 		int i = 0;

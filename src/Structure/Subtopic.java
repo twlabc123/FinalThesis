@@ -8,8 +8,9 @@ import java.util.Vector;
 
 import System.ActiveEventModule;
 import System.ExtractSummary;
-import TopicThreading.MultiView;
-import TopicThreading.TFISF;
+import TopicThreading.TopicThreading;
+import TopicThreading.Similarity.Tfisf;
+import TopicThreading.Similarity.TfisfKeyword;
 
 public class Subtopic {
 	
@@ -32,7 +33,7 @@ public class Subtopic {
 	/**
 	 * The events that are contained by the subtopic
 	 */
-	public Vector<EventEdge> event;
+	public Vector<Node> event;
 	/**
 	 * The start time of the subtopic
 	 */
@@ -71,8 +72,8 @@ public class Subtopic {
 		tf.putAll(e.tf);
 		df = new HashMap<String, Integer>();
 		df.putAll(e.df);
-		event = new Vector<EventEdge>();
-		event.add(new EventEdge(e.id, 1));
+		event = new Vector<Node>();
+		event.add(new Node(e.id, 1));
 		this.start = e.start;
 		this.end = e.end;
 		this.center = e.center;
@@ -87,7 +88,7 @@ public class Subtopic {
 		ID++;
 		tf = new HashMap<String, Integer>();
 		df = new HashMap<String, Integer>();
-		event = new Vector<EventEdge>();
+		event = new Vector<Node>();
 		start = "";
 		end = "";
 		docNum = 0;
@@ -108,8 +109,10 @@ public class Subtopic {
 		if (line == null) return null;
 		line = reader.readLine();
 		ret.id = Integer.parseInt(line.substring(4, line.length()-5));
+		//line = reader.readLine();
+		//ret.keyword = line.substring(10, line.length()-11);
 		line = reader.readLine();
-		ret.keyword = line.substring(10, line.length()-11);
+		line = reader.readLine();
 		line = reader.readLine();
 		int eventNum = Integer.parseInt(line.substring(10, line.length()-11));
 		for (int i = 0; i<eventNum; i++)
@@ -119,7 +122,7 @@ public class Subtopic {
 			int id = Integer.parseInt(line.substring(4,line.length()-5));
 			line = reader.readLine();
 			double value = Double.parseDouble(line.substring(7,line.length()-8));
-			ret.event.add(new EventEdge(id, value));
+			ret.event.add(new Node(id, value));
 			line = reader.readLine();
 			if (ret.summary.length() != 0) ret.summary += "\n";
 			ret.summary += line.substring(9, line.length()-10);
@@ -132,20 +135,23 @@ public class Subtopic {
 	/**
 	 * Print the subtopic to the output file
 	 * @param writer
-	 * @param model
+	 * @param topicThreading
 	 * @throws Exception
 	 */
-	public void printSubtopic(PrintWriter writer, TFISF model) throws Exception
+	public void printSubtopic(PrintWriter writer, TopicThreading topicThreading) throws Exception
 	{
 		writer.println("<subtopic>");
 		writer.println("<id>"+id+"</id>");
-		if (model != null) writer.println("<keywords>"+((MultiView)model).keyWords(this)+"</keywords>");
-		else writer.println("<keywords>"+this.keyword+"</keywords>");
+		writer.println("<start>"+this.start+"</start>");
+		writer.println("<end>"+this.end+"</end>");
+		//if (model != null) writer.println("<keywords>"+((MultiView)model).keyWords(this)+"</keywords>");
+		//else writer.println("<keywords>"+this.keyword+"</keywords>");
 		writer.println("<eventnum>"+event.size()+"</eventnum>");
 		String[] summaries = summary.split("\n");
 		for (int i = 0; i<event.size(); i++)
 		{
 			writer.println("<event>");
+			//writer.println("<number>"+i+"</number>");
 			writer.println("<id>"+event.elementAt(i).id+"</id>");
 			writer.println("<value>"+event.elementAt(i).value+"</value>");
 			String sum = "";
@@ -201,7 +207,7 @@ public class Subtopic {
 				a.df.put(term, e.df.get(term));
 			}
 		}
-		a.event.add(new EventEdge(e.id, sim));
+		a.event.add(new Node(e.id, sim));
 		
 		if (a.start.compareTo(e.start) > 0) a.start = e.start;
 		if (a.end.compareTo(e.end) < 0) a.end = e.end;

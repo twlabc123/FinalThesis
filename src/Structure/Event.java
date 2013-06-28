@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
-import DataPrepare.StopWordFilter;
+import DataPreprocess.StopWordFilter;
 
 /**
  * The event representation class

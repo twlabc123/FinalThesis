@@ -4,7 +4,8 @@ import java.util.HashSet;
 
 import Structure.ActiveEvent;
 import Structure.Event;
-import TopicThreading.TFISF;
+import TopicThreading.TopicThreading;
+import TopicThreading.Similarity.Tfisf;
 
 /**
  * The function of this class is to extract summary from sentences of an event
@@ -21,20 +22,21 @@ public class ExtractSummary {
 	/**
 	 * Extract a summary from the event
 	 * @param e
-	 * @param sa provide the subtopic frequency
+	 * @param tt provide the subtopic frequency
 	 * @return
 	 */
-	public static String ExtractEventSummary(Event e, TFISF sa)
+	public static String ExtractEventSummary(Event e, TopicThreading tt)
 	{
 		String ret = "";
 		String sent = "";
 		int docIndex = -1;
 		double tempSum = 0;
 		double maxScore = -1;
+		// First choose the title with highest score as summary
 		for (int i = 0; i<e.article.size(); i++)
 		{
 			String title = e.article.elementAt(i).title;
-			tempSum = computeScore(title, e, sa);
+			tempSum = computeScore(title, e, tt);
 			if (tempSum > maxScore)
 			{
 				ret = title;
@@ -42,14 +44,15 @@ public class ExtractSummary {
 				docIndex = i;
 			}
 		}
+		// Then consider all the sentences
 		String content = e.article.elementAt(docIndex).content;
 		String[] terms = content.split(" ");
 		int j = 0;
 		while (j <= terms.length)
 		{
-			if (j >= terms.length || sa.swf.isSentenceEnd(terms[j]))
+			if (j >= terms.length || tt.swf.isSentenceEnd(terms[j]))
 			{
-				tempSum = computeScore(sent, e, sa);
+				tempSum = computeScore(sent, e, tt);
 				if (tempSum > maxScore)
 				{
 					ret = sent;
@@ -66,13 +69,13 @@ public class ExtractSummary {
 	}
 	
 	/**
-	 * Get the score of a sentence
+	 * Get the score of a sentence/title
 	 * @param sent
 	 * @param e
-	 * @param sa
+	 * @param tt
 	 * @return
 	 */
-	static double computeScore(String sent, Event e, TFISF sa)
+	static double computeScore(String sent, Event e, TopicThreading tt)
 	{
 		if (sent.split(" ").length >= 30) return -0.2;// too long
 		int length = 0;
@@ -80,11 +83,11 @@ public class ExtractSummary {
 		String[] terms = sent.split(" ");
 		for (String term : terms)
 		{
-			if (!sa.sf.containsKey(term)) continue;
+			if (!tt.sf.containsKey(term)) continue;
 			length++;
 			if (e.tf.containsKey(term))
 			{
-				double isf = (Math.log((double)sa.stNum/((double)sa.sf.get(term))) / Math.log(sa.stNum));
+				double isf = (Math.log((double)tt.stNum/((double)tt.sf.get(term))) / Math.log(tt.stNum));
 				ret += e.tf.get(term) * isf;
 			}
 		}
